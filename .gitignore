@@ -70,8 +70,3 @@ docker-compose.override.yml
 # ================================
 *.sqlite3
 *.db
-
-# Environment variables
-.env
-.env.*
-!.env.example
