@@ -12,5 +12,8 @@ class Settings(BaseSettings):
 
     REDIS_URL: str = "redis://localhost:6379/0"
     CORS_ORIGINS: str = "http://localhost:3000"
+    
+    DEFAULT_ORG_ID: str = ""
+    API_KEY_HMAC_SECRET: str = ""
 
 settings = Settings()
