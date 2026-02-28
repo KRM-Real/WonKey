@@ -19,13 +19,22 @@ def create_key(project_id: str):
         raise RuntimeError("Failed to create API key.")
 
     row = cast(Dict[str, Any], res.data[0])
-    row["raw_key"] = raw 
+
+    row = cast(Dict[str, Any], res.data[0])
+
+    row.pop("key_hash", None) 
+    row["raw_key"] = raw
 
     return row
 
 def list_keys(project_id: str):
     sb = get_supabase()
-    res = sb.table("api_keys").select("*").eq("project_id", project_id).order("created_at", desc=True).execute()
+    res = sb.table("api_keys") \
+        .select("id, project_id, key_prefix, status, created_at, last_used_at") \
+        .eq("project_id", project_id) \
+        .order("created_at", desc=True) \
+        .execute()
+
     return res.data
 
 def revoke_key(key_id: str):
