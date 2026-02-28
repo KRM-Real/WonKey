@@ -1,9 +1,29 @@
 from app.db.supabase import get_supabase
 from app.core.security import generate_raw_api_key, api_key_prefix, hash_api_key
+from fastapi import HTTPException
+from app.core.config import settings
 from typing import cast, Dict, Any
 
+def _assert_project_in_default_org(sb, project_id: str) -> None:
+    proj = (
+        sb.table("projects")
+        .select("id, org_id")
+        .eq("id", project_id)
+        .maybe_single()
+        .execute()
+    )
+
+    if not proj.data:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    if proj.data["org_id"] != settings.DEFAULT_ORG_ID:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
 def create_key(project_id: str):
+    
     sb = get_supabase()
+    _assert_project_in_default_org(sb, project_id)
+    
     raw = generate_raw_api_key()
     prefix = api_key_prefix(raw)
     key_hash = hash_api_key(raw)
@@ -20,8 +40,6 @@ def create_key(project_id: str):
 
     row = cast(Dict[str, Any], res.data[0])
 
-    row = cast(Dict[str, Any], res.data[0])
-
     row.pop("key_hash", None) 
     row["raw_key"] = raw
 
@@ -29,6 +47,8 @@ def create_key(project_id: str):
 
 def list_keys(project_id: str):
     sb = get_supabase()
+    _assert_project_in_default_org(sb, project_id)
+    
     res = sb.table("api_keys") \
         .select("id, project_id, key_prefix, status, created_at, last_used_at") \
         .eq("project_id", project_id) \
