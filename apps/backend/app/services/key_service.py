@@ -3,6 +3,7 @@ from app.core.security import generate_raw_api_key, api_key_prefix, hash_api_key
 from fastapi import HTTPException
 from app.core.config import settings
 from typing import cast, Dict, Any
+from datetime import datetime, timezone
 
 def _assert_project_in_default_org(sb, project_id: str) -> None:
     proj = (
@@ -61,3 +62,33 @@ def revoke_key(key_id: str):
     sb = get_supabase()
     res = sb.table("api_keys").update({"status": "revoked"}).eq("id", key_id).execute()
     return res.data[0] if res.data else None
+
+
+def get_key_record_by_raw(raw_key: str) -> Dict[str, Any] | None:
+    sb = get_supabase()
+    prefix = api_key_prefix(raw_key, settings.API_KEY_PREFIX_LEN)
+    key_hash = hash_api_key(raw_key)
+
+    res = (
+        sb.table("api_keys")
+        .select("id, project_id, key_prefix, status, project:projects!inner(org_id)")
+        .eq("key_prefix", prefix)
+        .eq("key_hash", key_hash)
+        .limit(1)
+        .execute()
+    )
+
+    if not res.data:
+        return None
+
+    row = cast(Dict[str, Any], res.data[0])
+    project = cast(Dict[str, Any], row.get("project") or {})
+    row["org_id"] = project.get("org_id")
+    return row
+
+
+def touch_key_last_used(key_id: str) -> None:
+    sb = get_supabase()
+    sb.table("api_keys").update(
+        {"last_used_at": datetime.now(timezone.utc).isoformat()}
+    ).eq("id", key_id).execute()

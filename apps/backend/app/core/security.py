@@ -1,4 +1,3 @@
-import base64
 import hashlib
 import hmac
 import secrets
@@ -12,8 +11,11 @@ def generate_raw_api_key() -> str:
 def api_key_prefix(raw_key: str, n: int = 10) -> str:
     return raw_key[:n]
 
-def hash_api_key(raw_key: str) -> str:
+def hash_api_key(raw_key: str, pepper: str | None = None) -> str:
     secret = settings.API_KEY_HMAC_SECRET.encode("utf-8")
     msg = raw_key.encode("utf-8")
-    digest = hmac.new(secret, msg, hashlib.sha256).hexdigest()
-    return digest
+    return hmac.new(secret, msg, hashlib.sha256).hexdigest()
+
+
+def safe_equals(a: str, b: str) -> bool:
+    return hmac.compare_digest(a, b)

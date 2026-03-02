@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.db.redis import get_redis
+from app.middleware.api_key_auth import ApiKeyAuthMiddleware
+from app.middleware.rate_limit import RateLimitMiddleware
 from app.routes.projects import router as projects_router
 from app.routes.keys import router as keys_router
 
@@ -14,6 +16,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Middleware execution order for requests:
+# 1) ApiKeyAuthMiddleware
+# 2) RateLimitMiddleware
+# (Request logger will be inserted after rate limiting in a later sprint.)
+app.add_middleware(RateLimitMiddleware)
+app.add_middleware(ApiKeyAuthMiddleware)
 
 @app.get("/health")
 def health():
