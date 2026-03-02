@@ -145,8 +145,8 @@
 - Queries return in reasonable time for test data
 
 
-## Sprint 6 — Frontend Dashboard (Next.js)
-**Goal:** A usable dashboard for WonKey.
+## Sprint 6A - Frontend Dashboard Shell (Next.js, Frontend-First)
+**Goal:** Build the usable frontend foundation before logs/analytics backend is finished.
 
 **Pages**
 - Login / Signup (Supabase Auth)
@@ -159,13 +159,32 @@
 
 **UI components**
 - Keys table + create/revoke dialog
-- Logs table with filters
-- Charts for usage (timeseries + error rate)
+- Logs table with filters (placeholder state)
+- Charts for usage (timeseries + error rate, placeholder state)
+
+**Acceptance**
+- You can do the UI flow for available APIs:
+  - create project -> create key -> copy key
+- Logs and Analytics tabs render meaningful empty/loading placeholder states.
+
+
+## Sprint 6B - Frontend Integration Finish (After Sprint 4 + 5)
+**Goal:** Connect frontend Logs and Analytics to completed backend APIs.
+
+**Dependencies**
+- Sprint 4: Request Logging + Logs API
+- Sprint 5: Analytics API
+
+**Integration**
+- Wire Logs tab to:
+  - `GET /v1/projects/{project_id}/logs?status=&path=&from=&to=`
+- Wire Analytics tab to:
+  - `GET /v1/projects/{project_id}/analytics/overview?from=&to=`
+  - `GET /v1/projects/{project_id}/analytics/timeseries?bucket=hour`
 
 **Acceptance**
 - You can do the full flow from UI:
-  - create project → create key → copy key → see logs + charts
-
+  - create project -> create key -> copy key -> see logs + charts
 
 ## Sprint 7 — Deployment + Polishing
 **Goal:** Public demo and production-style setup.
@@ -186,3 +205,6 @@
 - Live URL works
 - Demo flow works reliably
 - README lets someone run it locally in < 10 minutes
+
+
+
