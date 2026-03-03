@@ -1,12 +1,12 @@
 import { AuthForm } from "@/components/auth-form";
 import { TopNav } from "@/components/top-nav";
 
-export default function LoginPage() {
+export default function SignupPage() {
   return (
     <>
       <TopNav />
       <main>
-        <AuthForm mode="login" />
+        <AuthForm mode="signup" />
       </main>
     </>
   );

@@ -158,6 +158,21 @@ th {
   background: color-mix(in oklab, var(--surface-2) 82%, white);
 }
 
+.auth-shell {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.auth-link {
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 768px) {
   main {
     padding: 16px;

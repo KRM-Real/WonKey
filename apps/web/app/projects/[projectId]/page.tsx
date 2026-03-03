@@ -1,5 +1,6 @@
 import { TopNav } from "@/components/top-nav";
 import { ProjectDetailClient } from "./project-detail-client";
+import { SessionGate } from "@/components/session-gate";
 
 type Props = {
   params: Promise<{ projectId: string }>;
@@ -22,7 +23,9 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
     <>
       <TopNav />
       <main>
-        <ProjectDetailClient projectId={projectId} tab={tab} />
+        <SessionGate>
+          <ProjectDetailClient projectId={projectId} tab={tab} />
+        </SessionGate>
       </main>
     </>
   );

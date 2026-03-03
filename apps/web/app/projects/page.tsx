@@ -1,5 +1,6 @@
 import { TopNav } from "@/components/top-nav";
-import { ProjectsClient } from "./projects-client";
+import { ProjectsClient } from "@/components/projects-client";
+import { SessionGate } from "@/components/session-gate";
 
 export default function ProjectsPage() {
   return (
@@ -12,7 +13,9 @@ export default function ProjectsPage() {
             Create projects and issue API keys from this dashboard.
           </p>
         </section>
-        <ProjectsClient />
+        <SessionGate>
+          <ProjectsClient />
+        </SessionGate>
       </main>
     </>
   );

@@ -42,6 +42,9 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     } catch {
       detail = fallback;
     }
+    if (res.status === 401 && typeof window !== "undefined") {
+      window.location.href = "/login";
+    }
     throw new Error(detail);
   }
 
