@@ -1,7 +1,11 @@
 from fastapi import HTTPException
+from app.core.config import settings
 
 
 def get_user_org_ids(sb, user_id: str) -> list[str]:
+    if settings.ENV == "dev" and settings.DEV_DISABLE_ORG_MEMBERSHIP_CHECKS:
+        return [settings.DEFAULT_ORG_ID] if settings.DEFAULT_ORG_ID else []
+
     memberships = (
         sb.table("org_members").select("org_id").eq("user_id", user_id).execute().data or []
     )

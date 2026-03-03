@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -8,6 +9,7 @@ class Settings(BaseSettings):
     SUPABASE_URL: str = ""
     SUPABASE_SERVICE_ROLE_KEY: str = ""
     DEFAULT_ORG_ID: str = ""
+    DEV_DISABLE_ORG_MEMBERSHIP_CHECKS: bool = False
     API_KEY_HMAC_SECRET: str = ""
     REDIS_URL: str = "redis://localhost:6379/0"
     CORS_ORIGINS: str = "http://localhost:3000"
@@ -26,6 +28,13 @@ class Settings(BaseSettings):
     REQUEST_LOG_SAMPLE_EVERY_N: int = 1
     LOGS_DEFAULT_LIMIT: int = 100
     LOGS_MAX_LIMIT: int = 500
+
+    @field_validator("DEFAULT_ORG_ID", mode="before")
+    @classmethod
+    def _sanitize_default_org_id(cls, v: str) -> str:
+        if not v:
+            return ""
+        return str(v).strip().split()[0]
 
 
     model_config = SettingsConfigDict(

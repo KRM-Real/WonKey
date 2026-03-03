@@ -8,11 +8,18 @@ type Props = {
   children: React.ReactNode;
 };
 
+const DEV_BYPASS_AUTH = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === "true";
+
 export function SessionGate({ children }: Props) {
   const router = useRouter();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    if (DEV_BYPASS_AUTH) {
+      setReady(true);
+      return;
+    }
+
     let mounted = true;
 
     async function run() {

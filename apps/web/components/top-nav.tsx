@@ -10,12 +10,19 @@ type NavItem = {
   label: string;
 };
 
+const DEV_BYPASS_AUTH = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === "true";
+
 export function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
+    if (DEV_BYPASS_AUTH) {
+      setAuthed(true);
+      return;
+    }
+
     let mounted = true;
 
     async function run() {

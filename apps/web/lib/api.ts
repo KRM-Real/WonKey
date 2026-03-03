@@ -13,7 +13,12 @@ type RequestOptions = {
   body?: unknown;
 };
 
+async function sleep(ms: number) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const method = options.method ?? "GET";
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
@@ -26,12 +31,37 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     }
   }
 
-  const res = await fetch(path, {
-    method: options.method ?? "GET",
-    headers,
-    body: options.body ? JSON.stringify(options.body) : undefined,
-    cache: "no-store",
-  });
+  let res: Response;
+  try {
+    res = await fetch(path, {
+      method,
+      headers,
+      body: options.body ? JSON.stringify(options.body) : undefined,
+      cache: "no-store",
+    });
+  } catch (error) {
+    if (method === "GET") {
+      await sleep(250);
+      res = await fetch(path, {
+        method,
+        headers,
+        body: options.body ? JSON.stringify(options.body) : undefined,
+        cache: "no-store",
+      });
+    } else {
+      throw error;
+    }
+  }
+
+  if (method === "GET" && (res.status === 500 || res.status === 502 || res.status === 503)) {
+    await sleep(250);
+    res = await fetch(path, {
+      method,
+      headers,
+      body: options.body ? JSON.stringify(options.body) : undefined,
+      cache: "no-store",
+    });
+  }
 
   if (!res.ok) {
     const fallback = `Request failed: ${res.status}`;

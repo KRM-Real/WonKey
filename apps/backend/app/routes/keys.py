@@ -17,8 +17,13 @@ def create(project_id: str, request: Request):
 
 @router.get("/projects/{project_id}/keys", response_model=list[ApiKeyOut])
 def list_all(project_id: str, request: Request):
-    user_id = require_admin_user_id(request)
-    return list_keys(project_id, user_id=user_id)
+    try:
+        user_id = require_admin_user_id(request)
+        return list_keys(project_id, user_id=user_id)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"List keys failed: {e}")
 
 
 @router.post("/keys/{key_id}/revoke")
