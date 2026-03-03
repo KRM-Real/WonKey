@@ -1,11 +1,13 @@
-# WonKey Web (Sprint 6A)
+# WonKey Web (Sprint 6B)
 
 Frontend shell for WonKey with:
 - Supabase Login/Signup scaffold (`/login`)
 - Projects list + create project (`/projects`)
 - Project detail tabs (`/projects/[projectId]?tab=keys|limits|logs|analytics`)
 - Keys tab integrated with backend create/list/revoke endpoints
-- Limits/Logs/Analytics tab placeholder states for Sprint 6A
+- Logs tab integrated with backend logs endpoint + filters
+- Analytics tab integrated with backend overview + hourly timeseries
+- Limits tab remains scaffolded
 
 ## Run
 
@@ -30,4 +32,4 @@ npm run dev
 ## Notes
 
 - Frontend API calls go through Next route handlers under `/api/admin/*`, so backend/admin keys stay server-side.
-- Logs and Analytics placeholders are intentionally not wired until backend Sprint 4 and Sprint 5 APIs are complete.
+- Logs and Analytics go through Next route handlers under `/api/admin/projects/[projectId]/*`.

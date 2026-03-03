@@ -28,6 +28,8 @@ dist/
 # ================================
 *.log
 logs/
+!apps/web/app/api/admin/projects/**/logs/
+!apps/web/app/api/admin/projects/**/logs/route.ts
 
 # ================================
 # VS Code / IDE

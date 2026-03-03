@@ -1,4 +1,11 @@
-import { ApiKey, ApiKeyCreateResult, Project } from "@/lib/types";
+import {
+  AnalyticsOverview,
+  AnalyticsTimeseries,
+  ApiKey,
+  ApiKeyCreateResult,
+  Project,
+  RequestLog,
+} from "@/lib/types";
 
 type RequestOptions = {
   method?: "GET" | "POST";
@@ -50,4 +57,56 @@ export function createProjectKey(projectId: string): Promise<ApiKeyCreateResult>
 
 export function revokeKey(keyId: string): Promise<ApiKey> {
   return request<ApiKey>(`/api/admin/keys/${keyId}/revoke`, { method: "POST" });
+}
+
+type LogsFilters = {
+  status?: number;
+  path?: string;
+  from?: string;
+  to?: string;
+  limit?: number;
+};
+
+function withQuery(path: string, query: Record<string, string | number | undefined>): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined && value !== "") {
+      params.set(key, String(value));
+    }
+  }
+  const q = params.toString();
+  return q ? `${path}?${q}` : path;
+}
+
+export function listProjectLogs(projectId: string, filters: LogsFilters = {}): Promise<RequestLog[]> {
+  return request<RequestLog[]>(
+    withQuery(`/api/admin/projects/${projectId}/logs`, {
+      status: filters.status,
+      path: filters.path,
+      from: filters.from,
+      to: filters.to,
+      limit: filters.limit,
+    }),
+  );
+}
+
+export function getAnalyticsOverview(
+  projectId: string,
+  from?: string,
+  to?: string,
+): Promise<AnalyticsOverview> {
+  return request<AnalyticsOverview>(
+    withQuery(`/api/admin/projects/${projectId}/analytics/overview`, { from, to }),
+  );
+}
+
+export function getAnalyticsTimeseries(
+  projectId: string,
+  bucket: "hour" = "hour",
+  from?: string,
+  to?: string,
+): Promise<AnalyticsTimeseries> {
+  return request<AnalyticsTimeseries>(
+    withQuery(`/api/admin/projects/${projectId}/analytics/timeseries`, { bucket, from, to }),
+  );
 }

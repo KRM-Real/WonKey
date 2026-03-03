@@ -8,6 +8,7 @@ from app.middleware.request_logger import RequestLoggerMiddleware
 from app.routes.projects import router as projects_router
 from app.routes.keys import router as keys_router
 from app.routes.logs import router as logs_router
+from app.routes.analytics import router as analytics_router
 
 app = FastAPI(title=settings.API_NAME, version=settings.API_VERSION)
 
@@ -40,6 +41,7 @@ def health_redis():
 app.include_router(projects_router)
 app.include_router(keys_router)
 app.include_router(logs_router)
+app.include_router(analytics_router)
 
 @app.get("/debug/env")
 def debug_env():
