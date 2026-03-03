@@ -4,8 +4,10 @@ from app.core.config import settings
 from app.db.redis import get_redis
 from app.middleware.api_key_auth import ApiKeyAuthMiddleware
 from app.middleware.rate_limit import RateLimitMiddleware
+from app.middleware.request_logger import RequestLoggerMiddleware
 from app.routes.projects import router as projects_router
 from app.routes.keys import router as keys_router
+from app.routes.logs import router as logs_router
 
 app = FastAPI(title=settings.API_NAME, version=settings.API_VERSION)
 
@@ -20,7 +22,8 @@ app.add_middleware(
 # Middleware execution order for requests:
 # 1) ApiKeyAuthMiddleware
 # 2) RateLimitMiddleware
-# (Request logger will be inserted after rate limiting in a later sprint.)
+# 3) RequestLoggerMiddleware
+app.add_middleware(RequestLoggerMiddleware)
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(ApiKeyAuthMiddleware)
 
@@ -36,6 +39,7 @@ def health_redis():
 
 app.include_router(projects_router)
 app.include_router(keys_router)
+app.include_router(logs_router)
 
 @app.get("/debug/env")
 def debug_env():
