@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.db.redis import get_redis
+from fastapi import HTTPException
+from app.middleware.admin_auth import AdminAuthMiddleware
 from app.middleware.api_key_auth import ApiKeyAuthMiddleware
 from app.middleware.rate_limit import RateLimitMiddleware
 from app.middleware.request_logger import RequestLoggerMiddleware
@@ -21,12 +23,14 @@ app.add_middleware(
 )
 
 # Middleware execution order for requests:
-# 1) ApiKeyAuthMiddleware
-# 2) RateLimitMiddleware
-# 3) RequestLoggerMiddleware
+# 1) AdminAuthMiddleware
+# 2) ApiKeyAuthMiddleware
+# 3) RateLimitMiddleware
+# 4) RequestLoggerMiddleware
 app.add_middleware(RequestLoggerMiddleware)
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(ApiKeyAuthMiddleware)
+app.add_middleware(AdminAuthMiddleware)
 
 @app.get("/health")
 def health():
@@ -45,9 +49,10 @@ app.include_router(analytics_router)
 
 @app.get("/debug/env")
 def debug_env():
+    if settings.ENV != "dev":
+        raise HTTPException(status_code=404, detail="Not found")
     return {
-        "supabase_url": settings.SUPABASE_URL,
-        "supabase_url_len": len(settings.SUPABASE_URL or ""),
-        "has_service_role_key": bool(settings.SUPABASE_SERVICE_ROLE_KEY),
-        "redis_url": settings.REDIS_URL,
+        "env": settings.ENV,
+        "api_name": settings.API_NAME,
+        "redis_configured": bool(settings.REDIS_URL),
     }

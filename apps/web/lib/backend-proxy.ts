@@ -6,11 +6,13 @@ const ADMIN_API_KEY = process.env.WONKEY_ADMIN_API_KEY;
 type ProxyOptions = {
   method?: "GET" | "POST";
   body?: string;
+  headers?: Record<string, string>;
 };
 
 export async function proxyToBackend(path: string, options: ProxyOptions = {}): Promise<Response> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    ...(options.headers ?? {}),
   };
 
   if (ADMIN_API_KEY) {

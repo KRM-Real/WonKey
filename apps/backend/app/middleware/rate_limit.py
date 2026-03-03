@@ -14,6 +14,9 @@ def _is_exempt_path(path: str) -> bool:
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        if getattr(request.state, "is_admin", False):
+            return await call_next(request)
+
         if _is_exempt_path(request.url.path):
             return await call_next(request)
 

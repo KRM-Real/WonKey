@@ -1,16 +1,24 @@
 from app.db.supabase import get_supabase
-from app.core.config import settings
+from app.services.authz_service import get_user_org_ids, resolve_user_org_for_creation
 
-def create_project(name:str):
+
+def create_project(name: str, user_id: str, org_id: str | None = None):
     sb = get_supabase()
-    if not settings.DEFAULT_ORG_ID:
-        raise RuntimeError("DEFAULT_ORG_ID is mising in env.")
-    res = sb.table("projects").insert({"org_id": settings.DEFAULT_ORG_ID, "name":name}).execute()
+    resolved_org = resolve_user_org_for_creation(sb, user_id, preferred_org_id=org_id)
+    res = sb.table("projects").insert({"org_id": resolved_org, "name": name}).execute()
     return res.data[0]
 
-def list_projects():
+
+def list_projects(user_id: str):
     sb = get_supabase()
-    if not settings.DEFAULT_ORG_ID:
-        raise RuntimeError("DEFAULT_ORG_ID is missing in env.")
-    res = sb.table("projects").select("*").eq("org_id", settings.DEFAULT_ORG_ID).order("created_at", desc=True).execute()
+    org_ids = get_user_org_ids(sb, user_id)
+    if not org_ids:
+        return []
+    res = (
+        sb.table("projects")
+        .select("*")
+        .in_("org_id", org_ids)
+        .order("created_at", desc=True)
+        .execute()
+    )
     return res.data

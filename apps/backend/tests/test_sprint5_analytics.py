@@ -78,6 +78,7 @@ class Sprint5AnalyticsTests(TestCase):
             client = TestClient(app)
             resp = client.get(
                 f"/v1/projects/{project_id}/analytics/overview",
+                headers={"X-User-Id": str(uuid4())},
                 params={"from": "2026-03-01T00:00:00Z", "to": "2026-03-03T00:00:00Z"},
             )
 
@@ -86,6 +87,7 @@ class Sprint5AnalyticsTests(TestCase):
             overview_mock.assert_called_once()
             kwargs = overview_mock.call_args.kwargs
             self.assertEqual(kwargs["project_id"], project_id)
+            self.assertIsNotNone(kwargs["user_id"])
             self.assertEqual(kwargs["from_ts"].isoformat(), "2026-03-01T00:00:00+00:00")
             self.assertEqual(kwargs["to_ts"].isoformat(), "2026-03-03T00:00:00+00:00")
 
@@ -97,6 +99,7 @@ class Sprint5AnalyticsTests(TestCase):
         client = TestClient(app)
         resp = client.get(
             f"/v1/projects/{project_id}/analytics/timeseries",
+            headers={"X-User-Id": str(uuid4())},
             params={"bucket": "day"},
         )
         self.assertEqual(resp.status_code, 400)

@@ -1,24 +1,7 @@
 from datetime import datetime
-from fastapi import HTTPException
 from app.core.config import settings
 from app.db.supabase import get_supabase
-
-
-def _assert_project_in_default_org(project_id: str) -> None:
-    sb = get_supabase()
-    proj = (
-        sb.table("projects")
-        .select("id, org_id")
-        .eq("id", project_id)
-        .maybe_single()
-        .execute()
-    )
-
-    if not proj.data:
-        raise HTTPException(status_code=404, detail="Project not found")
-
-    if proj.data["org_id"] != settings.DEFAULT_ORG_ID:
-        raise HTTPException(status_code=403, detail="Forbidden")
+from app.services.authz_service import assert_user_project_access
 
 
 def create_log(
@@ -50,18 +33,19 @@ def create_log(
 def list_logs(
     *,
     project_id: str,
+    user_id: str,
     status_code: int | None = None,
     path: str | None = None,
     from_ts: datetime | None = None,
     to_ts: datetime | None = None,
     limit: int | None = None,
 ):
-    _assert_project_in_default_org(project_id)
+    sb = get_supabase()
+    assert_user_project_access(sb, user_id, project_id)
 
     resolved_limit = limit if limit is not None else settings.LOGS_DEFAULT_LIMIT
     resolved_limit = min(max(resolved_limit, 1), settings.LOGS_MAX_LIMIT)
 
-    sb = get_supabase()
     query = (
         sb.table("request_logs")
         .select(

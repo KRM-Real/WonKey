@@ -6,6 +6,7 @@ import {
   Project,
   RequestLog,
 } from "@/lib/types";
+import { supabase } from "@/lib/supabase-browser";
 
 type RequestOptions = {
   method?: "GET" | "POST";
@@ -16,6 +17,14 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
+  if (supabase) {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      headers.Authorization = `Bearer ${session.access_token}`;
+    }
+  }
 
   const res = await fetch(path, {
     method: options.method ?? "GET",

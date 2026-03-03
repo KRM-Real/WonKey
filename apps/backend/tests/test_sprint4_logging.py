@@ -90,6 +90,7 @@ class Sprint4LoggingTests(TestCase):
             client = TestClient(app)
             resp = client.get(
                 f"/v1/projects/{project_id}/logs",
+                headers={"X-User-Id": str(uuid4())},
                 params={
                     "status": "200",
                     "path": "/v1/demo",
@@ -106,6 +107,7 @@ class Sprint4LoggingTests(TestCase):
             list_logs_mock.assert_called_once()
             kwargs = list_logs_mock.call_args.kwargs
             self.assertEqual(kwargs["project_id"], project_id)
+            self.assertIsNotNone(kwargs["user_id"])
             self.assertEqual(kwargs["status_code"], 200)
             self.assertEqual(kwargs["path"], "/v1/demo")
             self.assertEqual(kwargs["limit"], 25)

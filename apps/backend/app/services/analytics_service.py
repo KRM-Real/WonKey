@@ -1,25 +1,8 @@
 from datetime import datetime, timedelta, timezone
 from math import ceil
 from fastapi import HTTPException
-from app.core.config import settings
 from app.db.supabase import get_supabase
-
-
-def _assert_project_in_default_org(project_id: str) -> None:
-    sb = get_supabase()
-    proj = (
-        sb.table("projects")
-        .select("id, org_id")
-        .eq("id", project_id)
-        .maybe_single()
-        .execute()
-    )
-
-    if not proj.data:
-        raise HTTPException(status_code=404, detail="Project not found")
-
-    if proj.data["org_id"] != settings.DEFAULT_ORG_ID:
-        raise HTTPException(status_code=403, detail="Forbidden")
+from app.services.authz_service import assert_user_project_access
 
 
 def _normalize_window(
@@ -137,9 +120,14 @@ def _build_hourly_timeseries(
 
 
 def get_analytics_overview(
-    *, project_id: str, from_ts: datetime | None = None, to_ts: datetime | None = None
+    *,
+    project_id: str,
+    user_id: str,
+    from_ts: datetime | None = None,
+    to_ts: datetime | None = None,
 ) -> dict:
-    _assert_project_in_default_org(project_id)
+    sb = get_supabase()
+    assert_user_project_access(sb, user_id, project_id)
     window_from, window_to = _normalize_window(from_ts, to_ts)
     logs = _fetch_logs(project_id, window_from, window_to)
     overview = _build_overview(logs)
@@ -151,6 +139,7 @@ def get_analytics_overview(
 def get_analytics_timeseries(
     *,
     project_id: str,
+    user_id: str,
     bucket: str = "hour",
     from_ts: datetime | None = None,
     to_ts: datetime | None = None,
@@ -158,7 +147,8 @@ def get_analytics_timeseries(
     if bucket != "hour":
         raise HTTPException(status_code=400, detail="Only bucket=hour is supported")
 
-    _assert_project_in_default_org(project_id)
+    sb = get_supabase()
+    assert_user_project_access(sb, user_id, project_id)
     window_from, window_to = _normalize_window(from_ts, to_ts)
     logs = _fetch_logs(project_id, window_from, window_to)
     return {
