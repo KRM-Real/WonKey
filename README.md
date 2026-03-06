@@ -1,55 +1,97 @@
 # WonKey
 
-WonKey is a multi-tenant API key management platform with:
-- FastAPI backend (projects, keys, auth middleware, rate limiting)
-- Next.js dashboard frontend
-- Supabase for data + auth
-- Redis for rate limiting
+WonKey is a multi-tenant API key management platform for issuing keys, enforcing usage limits, and monitoring traffic through logs and analytics.
 
-## Current Status
+## Project Status
 
-- Sprint 0 to Sprint 3: implemented
-- Sprint 6A (frontend-first shell): implemented
-- Sprint 4, Sprint 5, Sprint 6B: planned next
+As of **March 6, 2026**, sprint implementation is complete (`Sprint 0-7` scope), and the project is in the **testing and polishing** phase.
 
-Sprint plan lives in [sprints.md](/c:/Users/realk/Desktop/WonKey/sprints.md).
+- Implementation: complete
+- Current focus: QA, bug fixes, UX cleanup, deployment hardening
+- Next checkpoint: release/demo readiness
+
+Full sprint breakdown: [sprints.md](./sprints.md)
+
+## Tech Stack
+
+- Backend: FastAPI, Supabase Python client, Redis
+- Frontend: Next.js (App Router), React, TypeScript
+- Data/Auth: Supabase (Postgres + Auth + RLS)
+- Infra: Docker Compose (local Redis), Supabase SQL migrations
+
+## Architecture Overview
+
+- `apps/backend`: Admin API + API key auth + rate limiting + logging + analytics
+- `apps/web`: Admin dashboard + server-side proxy routes (`/api/admin/*`)
+- `infra/supabase`: schema migrations, RLS policies, seed files
+- `infra/docker`: local Redis compose
+- `docs`: architecture and security notes
+
+Request flow (typical protected path):
+
+1. Admin request hits backend route.
+2. Middleware chain runs in order:
+   - `AdminAuthMiddleware`
+   - `ApiKeyAuthMiddleware`
+   - `RateLimitMiddleware`
+   - `RequestLoggerMiddleware`
+3. Route handler executes service logic against Supabase/Redis.
+
+## Implemented Features
+
+### Backend
+
+- Project management (`create`, `list`)
+- API key lifecycle (`create`, `list`, `revoke`)
+- API key verification via `Authorization: Bearer <key>`
+- Redis-backed rate limiting (`INCR` + `EXPIRE`)
+- Per-request logging with filterable logs endpoint
+- Analytics endpoints (overview + hourly timeseries)
+- Project limit configuration endpoints (`GET/PUT /limits`)
+
+### Frontend
+
+- Supabase-auth scaffold (login/signup)
+- Projects listing and project creation
+- Project detail workspace tabs: Keys, Limits, Logs, Analytics
+- Keys tab integrated with backend create/list/revoke
+- Limits tab integrated with backend get/update limits
+- Logs tab integrated with backend logs API + filters
+- Analytics tab integrated with overview + timeseries APIs
+- Server-side proxy handlers to avoid exposing admin secrets to browser clients
 
 ## Monorepo Structure
 
-- `apps/backend` - FastAPI API
-- `apps/web` - Next.js dashboard
-- `infra/docker` - local Redis compose
-- `infra/supabase` - SQL migrations, RLS policies, seed files
-- `docs` - architecture/security notes (in progress)
+```text
+.
+|- apps/
+|  |- backend/   # FastAPI service
+|  `- web/       # Next.js dashboard
+|- docs/         # Architecture and security notes
+|- infra/
+|  |- docker/    # Local Redis compose
+|  `- supabase/  # SQL migrations, RLS, seed
+`- sprints.md
+```
 
-## Features Implemented
+## Local Development Setup
 
-### Backend
-- Project and API key admin endpoints
-- API key generation and secure hash storage
-- API key auth middleware (`Authorization: Bearer <key>`)
-- Redis-based rate limit middleware (`INCR` + `EXPIRE`)
-- Request context injection (`org_id`, `project_id`, `key_id`)
+### Prerequisites
 
-### Frontend (Sprint 6A)
-- Login/signup scaffold page (Supabase client)
-- Projects list + create project
-- Project detail tabs: Keys, Limits, Logs, Analytics
-- Keys tab wired (create/list/revoke)
-- Logs/Analytics placeholder states
-- Server-side `/api/admin/*` proxy routes to keep backend/admin secrets off browser client
-
-## Local Setup
-
-Requirements:
 - Python 3.11+
 - Node.js 20+
-- Docker (only needed if using local Redis)
+- Docker (only if using local Redis)
 - Supabase project credentials
 
-## 1) Run Backend
+### 1) Start Redis (optional but common in local dev)
 
-From repo root:
+```powershell
+docker compose -f infra/docker/docker-compose.yml up -d
+```
+
+Use this when backend `REDIS_URL` points to `redis://localhost:6379/0`.
+
+### 2) Run Backend
 
 ```powershell
 cd apps/backend
@@ -59,20 +101,22 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
-Configure `apps/backend/.env` (example keys):
+Create `apps/backend/.env` from `apps/backend/.env.example` and set at least:
+
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `DEFAULT_ORG_ID`
 - `API_KEY_HMAC_SECRET`
-- `REDIS_URL` (example: `redis://localhost:6379/0`)
+- `REDIS_URL`
+- `CORS_ORIGINS`
+- `ADMIN_API_KEY`
 
 Health checks:
+
 - `GET http://127.0.0.1:8000/health`
 - `GET http://127.0.0.1:8000/health/redis`
 
-## 2) Run Frontend
-
-In a second terminal:
+### 3) Run Frontend
 
 ```powershell
 cd apps/web
@@ -82,42 +126,70 @@ npm run dev
 ```
 
 Set `apps/web/.env.local`:
+
 - `WONKEY_API_BASE_URL=http://127.0.0.1:8000`
-- `WONKEY_ADMIN_API_KEY=<optional/admin key for protected routes>`
+- `WONKEY_ADMIN_API_KEY=<admin key used by Next server routes>`
 - `NEXT_PUBLIC_SUPABASE_URL=<supabase-url>`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY=<supabase-anon-key>`
 
-Open:
-- `http://localhost:3000`
+Open `http://localhost:3000`.
 
-## 3) Is Docker Required?
+## API Reference (Current)
 
-- `Yes` if your backend points to local Redis (`redis://localhost:6379/0`)
-- `No` if you use managed/external Redis
-
-Start local Redis:
-
-```powershell
-docker compose -f infra/docker/docker-compose.yml up -d
-```
-
-## Security Notes
-
-- Do not expose backend admin keys through `NEXT_PUBLIC_*`.
-- Keep backend secrets in server-side env vars only.
-- Frontend calls backend admin APIs through server route handlers (`/api/admin/*`).
-
-## API Snapshot (Implemented)
+### Projects
 
 - `POST /v1/projects`
 - `GET /v1/projects`
+
+### Keys
+
 - `POST /v1/projects/{project_id}/keys`
 - `GET /v1/projects/{project_id}/keys`
 - `POST /v1/keys/{key_id}/revoke`
 
-## Next Milestones
+### Limits
 
-1. Sprint 4: request logger middleware + logs API
-2. Sprint 5: analytics endpoints (overview + timeseries)
-3. Sprint 6B: wire Logs/Analytics tabs to live backend data
-4. Sprint 7: deployment + polish
+- `GET /v1/projects/{project_id}/limits`
+- `PUT /v1/projects/{project_id}/limits`
+
+### Logs
+
+- `GET /v1/projects/{project_id}/logs?status=&path=&from=&to=&limit=`
+
+### Analytics
+
+- `GET /v1/projects/{project_id}/analytics/overview?from=&to=`
+- `GET /v1/projects/{project_id}/analytics/timeseries?bucket=hour&from=&to=`
+
+## Testing
+
+Current backend tests are under `apps/backend/tests` and use `unittest`.
+
+```powershell
+cd apps/backend
+python -m unittest discover -s tests -p "test_*.py"
+```
+
+Covered areas include Sprint 4 logging behavior and Sprint 5 analytics calculations/routes.
+
+## Security Notes
+
+- Never place admin secrets in `NEXT_PUBLIC_*` variables.
+- Keep backend secrets server-side only.
+- Use Next server route handlers (`/api/admin/*`) as the browser-to-backend bridge.
+- Keep RLS policies and org membership checks enabled outside local development shortcuts.
+
+## Documentation
+
+- Sprint plan: [sprints.md](./sprints.md)
+- Backend app: [apps/backend](./apps/backend)
+- Frontend app: [apps/web](./apps/web)
+- Infra and SQL: [infra](./infra)
+- Architecture notes: [docs](./docs)
+
+## Current Priorities
+
+1. Expand automated test coverage across core flows and edge cases.
+2. Tighten production configuration and secret management.
+3. Finalize UI/UX polish and error-state consistency.
+4. Validate deployment flow and release checklist.
