@@ -1,7 +1,7 @@
 # WonKey Web (Sprint 6B)
 
 Frontend shell for WonKey with:
-- Supabase Login/Signup scaffold (`/login`)
+- Supabase Login/Signup (`/login`, `/signup`)
 - Projects list + create project (`/projects`)
 - Project detail tabs (`/projects/[projectId]?tab=keys|limits|logs|analytics`)
 - Keys tab integrated with backend create/list/revoke endpoints

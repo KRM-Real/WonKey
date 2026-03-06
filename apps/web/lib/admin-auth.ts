@@ -4,8 +4,6 @@ import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const DEV_BYPASS_AUTH = process.env.DEV_BYPASS_AUTH === "true";
-const DEV_BYPASS_USER_ID = process.env.DEV_BYPASS_USER_ID ?? "dev-local-user";
 
 function unauthorized(detail: string): Response {
   return new Response(JSON.stringify({ detail }), {
@@ -15,10 +13,6 @@ function unauthorized(detail: string): Response {
 }
 
 export async function requireAdminUser(request: Request): Promise<{ userId: string } | Response> {
-  if (process.env.NODE_ENV !== "production" && DEV_BYPASS_AUTH) {
-    return { userId: DEV_BYPASS_USER_ID };
-  }
-
   try {
     const auth = request.headers.get("Authorization");
     const token = auth?.toLowerCase().startsWith("bearer ")

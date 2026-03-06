@@ -11,8 +11,6 @@ type Props = {
   mode: Mode;
 };
 
-const DEV_BYPASS_AUTH = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === "true";
-
 export function AuthForm({ mode }: Props) {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -81,11 +79,6 @@ export function AuthForm({ mode }: Props) {
 
   return (
     <section className="panel auth-shell">
-      {DEV_BYPASS_AUTH ? (
-        <div className="badge" style={{ marginBottom: 10 }}>
-          Dev auth bypass is enabled
-        </div>
-      ) : null}
       <h1 style={{ marginTop: 0, marginBottom: 8, fontSize: 34 }}>
         {mode === "login" ? "Welcome back" : "Create your WonKey account"}
       </h1>

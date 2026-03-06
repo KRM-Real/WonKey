@@ -6,8 +6,6 @@ import { useEffect, useState } from "react";
 import { BellIcon, ChevronDownIcon } from "@/components/icons";
 import { supabase } from "@/lib/supabase-browser";
 
-const DEV_BYPASS_AUTH = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === "true";
-
 export function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
@@ -15,12 +13,6 @@ export function TopNav() {
   const [email, setEmail] = useState("user@example.com");
 
   useEffect(() => {
-    if (DEV_BYPASS_AUTH) {
-      setAuthed(true);
-      setEmail("user@example.com");
-      return;
-    }
-
     let mounted = true;
 
     async function run() {

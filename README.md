@@ -51,7 +51,7 @@ Request flow (typical protected path):
 
 ### Frontend
 
-- Supabase-auth scaffold (login/signup)
+- Supabase auth (signup/login with session enforcement)
 - Projects listing and project creation
 - Project detail workspace tabs: Keys, Limits, Logs, Analytics
 - Keys tab integrated with backend create/list/revoke
