@@ -4,7 +4,7 @@ const API_BASE = process.env.WONKEY_API_BASE_URL ?? "http://127.0.0.1:8000";
 const ADMIN_API_KEY = process.env.WONKEY_ADMIN_API_KEY;
 
 type ProxyOptions = {
-  method?: "GET" | "POST";
+  method?: "GET" | "POST" | "PUT";
   body?: string;
   headers?: Record<string, string>;
 };

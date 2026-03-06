@@ -3,11 +3,13 @@ import { TopNav } from "@/components/top-nav";
 
 export default function LoginPage() {
   return (
-    <>
-      <TopNav />
-      <main>
-        <AuthForm mode="login" />
-      </main>
-    </>
+    <main>
+      <section className="app-shell">
+        <TopNav />
+        <div className="dashboard-main">
+          <AuthForm mode="login" />
+        </div>
+      </section>
+    </main>
   );
 }

@@ -1,4 +1,3 @@
-import { TopNav } from "@/components/top-nav";
 import { ProjectDetailClient } from "./project-detail-client";
 import { SessionGate } from "@/components/session-gate";
 
@@ -20,13 +19,10 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
   const tab = normalizeTab(query.tab);
 
   return (
-    <>
-      <TopNav />
-      <main>
-        <SessionGate>
-          <ProjectDetailClient projectId={projectId} tab={tab} />
-        </SessionGate>
-      </main>
-    </>
+    <main>
+      <SessionGate>
+        <ProjectDetailClient projectId={projectId} tab={tab} />
+      </SessionGate>
+    </main>
   );
 }

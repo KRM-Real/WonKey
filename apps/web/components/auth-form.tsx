@@ -86,15 +86,17 @@ export function AuthForm({ mode }: Props) {
           Dev auth bypass is enabled
         </div>
       ) : null}
-      <h1 style={{ marginTop: 0 }}>{mode === "login" ? "Log in" : "Create account"}</h1>
-      <p className="muted" style={{ marginTop: 0 }}>
+      <h1 style={{ marginTop: 0, marginBottom: 8, fontSize: 34 }}>
+        {mode === "login" ? "Welcome back" : "Create your WonKey account"}
+      </h1>
+      <p className="muted" style={{ marginTop: 0, marginBottom: 20 }}>
         {mode === "login"
           ? "Access your WonKey dashboard."
           : "Start managing API keys and usage analytics."}
       </p>
 
-      <form onSubmit={onSubmit} className="stack">
-        <label>
+      <form onSubmit={onSubmit} className="stack" style={{ gap: 12 }}>
+        <label style={{ display: "grid", gap: 8 }}>
           Email
           <input
             className="input"
@@ -106,7 +108,7 @@ export function AuthForm({ mode }: Props) {
           />
         </label>
 
-        <label>
+        <label style={{ display: "grid", gap: 8 }}>
           Password
           <input
             className="input"
@@ -120,7 +122,7 @@ export function AuthForm({ mode }: Props) {
         </label>
 
         {mode === "signup" ? (
-          <label>
+          <label style={{ display: "grid", gap: 8 }}>
             Confirm password
             <input
               className="input"
@@ -139,7 +141,7 @@ export function AuthForm({ mode }: Props) {
         </button>
       </form>
 
-      <p className="muted" style={{ marginBottom: 0 }}>
+      <p className="muted" style={{ marginBottom: 0, marginTop: 16 }}>
         {mode === "login" ? "No account yet? " : "Already have an account? "}
         <Link href={mode === "login" ? "/signup" : "/login"} className="auth-link">
           {mode === "login" ? "Sign up" : "Log in"}

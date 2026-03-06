@@ -4,19 +4,21 @@ import { SessionGate } from "@/components/session-gate";
 
 export default function ProjectsPage() {
   return (
-    <>
-      <TopNav />
-      <main className="stack">
-        <section>
-          <h1 style={{ marginBottom: 8 }}>Projects</h1>
-          <p className="muted" style={{ marginTop: 0 }}>
-            Create projects and issue API keys from this dashboard.
-          </p>
-        </section>
-        <SessionGate>
-          <ProjectsClient />
-        </SessionGate>
-      </main>
-    </>
+    <main>
+      <section className="app-shell">
+        <TopNav />
+        <div className="dashboard-main">
+          <section style={{ marginBottom: 16 }}>
+            <h1 style={{ margin: 0, fontSize: 44 }}>Projects</h1>
+            <p className="muted" style={{ marginTop: 6, marginBottom: 0 }}>
+              Build and manage API products with polished key management and usage tracking.
+            </p>
+          </section>
+          <SessionGate>
+            <ProjectsClient />
+          </SessionGate>
+        </div>
+      </section>
+    </main>
   );
 }

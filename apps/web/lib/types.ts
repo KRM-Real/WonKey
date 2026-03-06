@@ -56,3 +56,9 @@ export type AnalyticsTimeseries = {
   window_end: string;
   points: AnalyticsPoint[];
 };
+
+export type UsageLimitConfig = {
+  requestsPerMinute: number;
+  windowSeconds: number;
+  burst: number;
+};

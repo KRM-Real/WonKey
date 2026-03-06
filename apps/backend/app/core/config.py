@@ -23,6 +23,7 @@ class Settings(BaseSettings):
 
     RATE_LIMIT_DEFAULT_RPM: int = 60
     RATE_LIMIT_WINDOW_SECONDS: int = 60
+    RATE_LIMIT_DEFAULT_BURST: int = 0
     RATE_LIMIT_EXEMPT_PATHS: str = "/health,/health/redis,/docs,/redoc,/openapi.json"
     REQUEST_LOG_EXEMPT_PATHS: str = "/health,/health/redis,/docs,/redoc,/openapi.json"
     REQUEST_LOG_SAMPLE_EVERY_N: int = 1

@@ -5,11 +5,12 @@ import {
   ApiKeyCreateResult,
   Project,
   RequestLog,
+  UsageLimitConfig,
 } from "@/lib/types";
 import { supabase } from "@/lib/supabase-browser";
 
 type RequestOptions = {
-  method?: "GET" | "POST";
+  method?: "GET" | "POST" | "PUT";
   body?: unknown;
 };
 
@@ -151,4 +152,38 @@ export function getAnalyticsTimeseries(
   return request<AnalyticsTimeseries>(
     withQuery(`/api/admin/projects/${projectId}/analytics/timeseries`, { bucket, from, to }),
   );
+}
+
+type UsageLimitsWire = {
+  requests_per_minute: number;
+  window_seconds: number;
+  burst: number;
+};
+
+export async function getProjectLimits(projectId: string): Promise<UsageLimitConfig> {
+  const wire = await request<UsageLimitsWire>(`/api/admin/projects/${projectId}/limits`);
+  return {
+    requestsPerMinute: wire.requests_per_minute,
+    windowSeconds: wire.window_seconds,
+    burst: wire.burst,
+  };
+}
+
+export async function updateProjectLimits(
+  projectId: string,
+  payload: UsageLimitConfig,
+): Promise<UsageLimitConfig> {
+  const wire = await request<UsageLimitsWire>(`/api/admin/projects/${projectId}/limits`, {
+    method: "PUT",
+    body: {
+      requests_per_minute: payload.requestsPerMinute,
+      window_seconds: payload.windowSeconds,
+      burst: payload.burst,
+    },
+  });
+  return {
+    requestsPerMinute: wire.requests_per_minute,
+    windowSeconds: wire.window_seconds,
+    burst: wire.burst,
+  };
 }

@@ -4,13 +4,12 @@ import { useMemo, useState } from "react";
 import { ApiKey, ApiKeyCreateResult } from "@/lib/types";
 
 type Props = {
-  initialKeys: ApiKey[];
+  keys: ApiKey[];
   onCreate: () => Promise<ApiKeyCreateResult>;
   onRevoke: (keyId: string) => Promise<void>;
 };
 
-export function KeysPanel({ initialKeys, onCreate, onRevoke }: Props) {
-  const [keys, setKeys] = useState<ApiKey[]>(initialKeys);
+export function KeysPanel({ keys, onCreate, onRevoke }: Props) {
   const [busyCreate, setBusyCreate] = useState(false);
   const [busyRevoke, setBusyRevoke] = useState<string | null>(null);
   const [newRawKey, setNewRawKey] = useState<string | null>(null);
@@ -21,7 +20,6 @@ export function KeysPanel({ initialKeys, onCreate, onRevoke }: Props) {
     try {
       const created = await onCreate();
       setNewRawKey(created.raw_key);
-      setKeys((prev) => [created, ...prev]);
     } finally {
       setBusyCreate(false);
     }
@@ -31,7 +29,6 @@ export function KeysPanel({ initialKeys, onCreate, onRevoke }: Props) {
     setBusyRevoke(id);
     try {
       await onRevoke(id);
-      setKeys((prev) => prev.map((k) => (k.id === id ? { ...k, status: "revoked" } : k)));
     } finally {
       setBusyRevoke(null);
     }
@@ -39,19 +36,19 @@ export function KeysPanel({ initialKeys, onCreate, onRevoke }: Props) {
 
   return (
     <section className="stack">
-      <div className="panel" style={{ padding: 16, display: "flex", justifyContent: "space-between" }}>
+      <div className="card soft-shadow" style={{ padding: 16, display: "flex", justifyContent: "space-between" }}>
         <div>
           <h3 style={{ margin: 0 }}>API Keys</h3>
           <p className="muted" style={{ marginBottom: 0 }}>
             {activeCount} active key(s)
           </p>
         </div>
-        <button className="button button-primary" onClick={createKey} disabled={busyCreate}>
+        <button className="button button-primary" onClick={createKey} disabled={busyCreate} type="button">
           {busyCreate ? "Creating..." : "Create Key"}
         </button>
       </div>
 
-      <div className="panel table-wrap">
+      <div className="card table-wrap soft-shadow">
         <table>
           <thead>
             <tr>
@@ -72,16 +69,17 @@ export function KeysPanel({ initialKeys, onCreate, onRevoke }: Props) {
             ) : (
               keys.map((key) => (
                 <tr key={key.id}>
+                  <td style={{ fontFamily: "var(--font-mono), monospace" }}>{key.key_prefix}</td>
                   <td>
-                    <code>{key.key_prefix}</code>
-                  </td>
-                  <td className={key.status === "active" ? "status-active" : "status-revoked"}>
-                    {key.status}
+                    <span className={`status-badge ${key.status === "active" ? "status-active" : "status-revoked"}`}>
+                      {key.status}
+                    </span>
                   </td>
                   <td>{new Date(key.created_at).toLocaleString()}</td>
                   <td>{key.last_used_at ? new Date(key.last_used_at).toLocaleString() : "Never"}</td>
                   <td>
                     <button
+                      type="button"
                       className="button button-danger"
                       disabled={key.status !== "active" || busyRevoke === key.id}
                       onClick={() => revokeKey(key.id)}
@@ -97,12 +95,13 @@ export function KeysPanel({ initialKeys, onCreate, onRevoke }: Props) {
       </div>
 
       {newRawKey ? (
-        <div className="panel" style={{ padding: 16, borderColor: "var(--brand)" }}>
+        <div className="card soft-shadow" style={{ padding: 16, borderColor: "#b9e1dc" }}>
           <h4 style={{ marginTop: 0 }}>Copy your new key now</h4>
           <p className="muted">This value is shown once.</p>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <input readOnly className="input" value={newRawKey} />
             <button
+              type="button"
               className="button button-soft"
               onClick={async () => {
                 await navigator.clipboard.writeText(newRawKey);
@@ -110,7 +109,7 @@ export function KeysPanel({ initialKeys, onCreate, onRevoke }: Props) {
             >
               Copy
             </button>
-            <button className="button button-soft" onClick={() => setNewRawKey(null)}>
+            <button type="button" className="button button-soft" onClick={() => setNewRawKey(null)}>
               Dismiss
             </button>
           </div>

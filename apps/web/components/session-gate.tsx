@@ -47,7 +47,7 @@ export function SessionGate({ children }: Props) {
   }, [router]);
 
   if (!ready) {
-    return <div className="panel" style={{ padding: 16 }}>Loading session...</div>;
+    return <div className="card" style={{ padding: 16 }}>Loading session...</div>;
   }
 
   return <>{children}</>;
