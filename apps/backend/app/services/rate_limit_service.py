@@ -25,17 +25,22 @@ def _default_rule(project_id: str) -> dict:
 
 def get_project_rate_limit_rule(project_id: str) -> dict:
     sb = get_supabase()
-    res = (
-        sb.table("rate_limit_rules")
-        .select("project_id, requests_per_minute, window_seconds, burst, created_at, updated_at")
-        .eq("project_id", project_id)
-        .maybe_single()
-        .execute()
-    )
-    if not res.data:
+    try:
+        res = (
+            sb.table("rate_limit_rules")
+            .select("project_id, requests_per_minute, window_seconds, burst, created_at, updated_at")
+            .eq("project_id", project_id)
+            .limit(1)
+            .execute()
+        )
+    except Exception:
         return _default_rule(project_id)
 
-    row = res.data
+    rows = res.data or []
+    if not rows:
+        return _default_rule(project_id)
+
+    row = rows[0]
     rpm = row.get("requests_per_minute")
     window = row.get("window_seconds")
     burst = row.get("burst")

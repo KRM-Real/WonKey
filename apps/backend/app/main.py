@@ -12,6 +12,7 @@ from app.routes.keys import router as keys_router
 from app.routes.logs import router as logs_router
 from app.routes.analytics import router as analytics_router
 from app.routes.limits import router as limits_router
+from app.routes.health import router as health_router
 
 app = FastAPI(title=settings.API_NAME, version=settings.API_VERSION)
 
@@ -48,6 +49,7 @@ app.include_router(keys_router)
 app.include_router(logs_router)
 app.include_router(analytics_router)
 app.include_router(limits_router)
+app.include_router(health_router)
 
 @app.get("/debug/env")
 def debug_env():

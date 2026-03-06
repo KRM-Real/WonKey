@@ -24,10 +24,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if identity is None:
             return await call_next(request)
 
-        result = check_and_increment_rate_limit(
-            project_id=identity.project_id,
-            key_id=identity.key_id,
-        )
+        try:
+            result = check_and_increment_rate_limit(
+                project_id=identity.project_id,
+                key_id=identity.key_id,
+            )
+        except Exception:
+            return await call_next(request)
+
         headers = {
             "X-RateLimit-Limit": str(result.limit),
             "X-RateLimit-Remaining": str(result.remaining),
