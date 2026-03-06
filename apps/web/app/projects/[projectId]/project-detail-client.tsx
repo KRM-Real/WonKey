@@ -16,9 +16,7 @@ import { AnalyticsOverview, AnalyticsTimeseries, ApiKey, RequestLog, UsageLimitC
 import {
   mockKeysByProject,
   mockLogsByProject,
-  mockOverviewByProject,
   mockProjects,
-  mockTimeseriesByProject,
 } from "@/lib/mock-data";
 import { AnalyticsFilters, AnalyticsPanel } from "@/components/analytics-panel";
 import { KeysPanel } from "@/components/keys-panel";
@@ -195,16 +193,17 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
       try {
         const from = toIsoOrUndefined(filters.from) ?? fromRange(filters.range);
         const to = toIsoOrUndefined(filters.to) ?? new Date().toISOString();
-        const [overviewData, timeseriesData] = await Promise.all([
+        const [overviewData, timeseriesData, recentLogs] = await Promise.all([
           getAnalyticsOverview(projectId, from, to),
           getAnalyticsTimeseries(projectId, "hour", from, to),
+          listProjectLogs(projectId, { from, to, limit: 10 }),
         ]);
         setOverview(overviewData);
         setTimeseries(timeseriesData);
+        setLogs(recentLogs);
       } catch (e) {
-        setUsingMock(true);
-        setOverview(mockOverviewByProject[projectId] ?? mockOverviewByProject.proj_payments);
-        setTimeseries(mockTimeseriesByProject[projectId] ?? mockTimeseriesByProject.proj_payments);
+        setOverview(null);
+        setTimeseries(null);
         setAnalyticsError(e instanceof Error ? e.message : "Failed to load analytics");
       } finally {
         setAnalyticsLoading(false);
@@ -219,6 +218,14 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
     if (tab === "logs") void loadLogs();
     if (tab === "analytics") void loadAnalytics();
   }, [tab, loadKeys, loadLimits, loadLogs, loadAnalytics]);
+
+  useEffect(() => {
+    if (tab !== "analytics") return;
+    const id = window.setInterval(() => {
+      void loadAnalytics();
+    }, 15000);
+    return () => window.clearInterval(id);
+  }, [tab, loadAnalytics]);
 
   const hasLoadedAnyData = useMemo(
     () => keys.length > 0 || logs.length > 0 || Boolean(overview) || Boolean(timeseries),
@@ -275,7 +282,7 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
             <AnalyticsPanel
               overview={overview}
               timeseries={timeseries}
-              logsPreview={logs.length > 0 ? logs : mockLogsByProject[projectId] ?? []}
+              logsPreview={logs}
               loading={analyticsLoading}
               error={analyticsError}
               filters={analyticsFilters}
