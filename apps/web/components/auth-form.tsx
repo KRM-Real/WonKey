@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase-browser";
 
@@ -18,14 +18,6 @@ export function AuthForm({ mode }: Props) {
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-
-  const missingSupabase = useMemo(() => !supabase, []);
-
-  useEffect(() => {
-    if (missingSupabase) {
-      setMessage("Frontend auth is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in apps/web/.env.local.");
-    }
-  }, [missingSupabase]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
