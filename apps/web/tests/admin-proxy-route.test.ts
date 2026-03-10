@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 
 import { adminProxyGet, adminProxyWrite } from "../lib/admin-proxy-route.ts";
+import {
+  fetchWithRetry,
+  handleUnauthorizedRedirect,
+  readErrorDetail,
+  withQuery,
+} from "../lib/api-core.ts";
 
 async function testAuthFailureShortCircuits() {
   let proxied = false;
@@ -132,11 +138,108 @@ async function testWriteForwardingWithoutBody() {
   });
 }
 
+async function testWithQueryOmitsEmptyValues() {
+  assert.equal(
+    withQuery("/api/admin/projects/demo/logs", {
+      status: 500,
+      path: "",
+      from: "2026-03-10T00:00:00.000Z",
+      to: undefined,
+      limit: 25,
+    }),
+    "/api/admin/projects/demo/logs?status=500&from=2026-03-10T00%3A00%3A00.000Z&limit=25",
+  );
+}
+
+async function testFetchWithRetryRetriesGetOnTransientStatus() {
+  const originalFetch = globalThis.fetch;
+  const calls: Array<{ path: string; method: string }> = [];
+  let attempt = 0;
+
+  globalThis.fetch = (async (input, init) => {
+    calls.push({ path: String(input), method: String(init?.method) });
+    attempt += 1;
+    if (attempt === 1) {
+      return new Response(JSON.stringify({ detail: "Temporary upstream issue" }), { status: 503 });
+    }
+    return new Response(JSON.stringify({ ok: true }), { status: 200 });
+  }) as typeof fetch;
+
+  try {
+    const response = await fetchWithRetry("/api/admin/projects", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(calls.length, 2);
+    assert.deepEqual(calls, [
+      { path: "/api/admin/projects", method: "GET" },
+      { path: "/api/admin/projects", method: "GET" },
+    ]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
+async function testFetchWithRetryDoesNotRetryNonGetFailures() {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+
+  globalThis.fetch = (async () => {
+    calls += 1;
+    throw new Error("network down");
+  }) as typeof fetch;
+
+  try {
+    await assert.rejects(
+      fetchWithRetry("/api/admin/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: { name: "Demo" },
+      }),
+      /network down/,
+    );
+    assert.equal(calls, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
+async function testReadErrorDetailFallsBackWhenJsonIsMissing() {
+  const detail = await readErrorDetail(new Response("gateway exploded", { status: 502 }));
+  assert.equal(detail, "Request failed: 502");
+}
+
+async function testHandleUnauthorizedRedirectRoutesToLogin() {
+  const originalWindow = globalThis.window;
+  const location = { href: "/projects" };
+  Object.defineProperty(globalThis, "window", {
+    value: { location },
+    configurable: true,
+  });
+
+  try {
+    handleUnauthorizedRedirect(new Response(null, { status: 401 }));
+    assert.equal(location.href, "/login");
+  } finally {
+    Object.defineProperty(globalThis, "window", {
+      value: originalWindow,
+      configurable: true,
+    });
+  }
+}
+
 async function run() {
   await testAuthFailureShortCircuits();
   await testGetForwarding();
   await testWriteForwardingWithBody();
   await testWriteForwardingWithoutBody();
+  await testWithQueryOmitsEmptyValues();
+  await testFetchWithRetryRetriesGetOnTransientStatus();
+  await testFetchWithRetryDoesNotRetryNonGetFailures();
+  await testReadErrorDetailFallsBackWhenJsonIsMissing();
+  await testHandleUnauthorizedRedirectRoutesToLogin();
   console.log("admin-proxy-route tests passed");
 }
 

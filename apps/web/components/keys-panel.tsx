@@ -5,11 +5,12 @@ import { ApiKey, ApiKeyCreateResult } from "@/lib/types";
 
 type Props = {
   keys: ApiKey[];
+  error: string | null;
   onCreate: () => Promise<ApiKeyCreateResult>;
   onRevoke: (keyId: string) => Promise<void>;
 };
 
-export function KeysPanel({ keys, onCreate, onRevoke }: Props) {
+export function KeysPanel({ keys, error, onCreate, onRevoke }: Props) {
   const [busyCreate, setBusyCreate] = useState(false);
   const [busyRevoke, setBusyRevoke] = useState<string | null>(null);
   const [newRawKey, setNewRawKey] = useState<string | null>(null);
@@ -47,6 +48,12 @@ export function KeysPanel({ keys, onCreate, onRevoke }: Props) {
           {busyCreate ? "Creating..." : "Create Key"}
         </button>
       </div>
+
+      {error ? (
+        <div className="card" style={{ padding: 16, borderColor: "#efc6c9", color: "var(--danger)" }}>
+          {error}
+        </div>
+      ) : null}
 
       <div className="card table-wrap soft-shadow">
         <table>

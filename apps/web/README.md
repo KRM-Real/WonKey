@@ -5,9 +5,10 @@ Frontend shell for WonKey with:
 - Projects list + create project (`/projects`)
 - Project detail tabs (`/projects/[projectId]?tab=keys|limits|logs|analytics`)
 - Keys tab integrated with backend create/list/revoke endpoints
+- Limits tab integrated with backend get/update endpoints
 - Logs tab integrated with backend logs endpoint + filters
 - Analytics tab integrated with backend overview + hourly timeseries
-- Limits tab remains scaffolded
+- Server-side admin proxy routes tested independently from browser components
 
 ## Run
 
@@ -29,7 +30,15 @@ cp .env.example .env.local
 npm run dev
 ```
 
+## Verify
+
+```bash
+npm test
+npx tsc --noEmit
+```
+
 ## Notes
 
 - Frontend API calls go through Next route handlers under `/api/admin/*`, so backend/admin keys stay server-side.
 - Logs and Analytics go through Next route handlers under `/api/admin/projects/[projectId]/*`.
+- The test script exercises the shared admin proxy and API transport helpers used by those route handlers.

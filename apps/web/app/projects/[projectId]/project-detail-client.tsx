@@ -72,6 +72,7 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
   const [keysError, setKeysError] = useState<string | null>(null);
   const [logsError, setLogsError] = useState<string | null>(null);
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
+  const [limitsError, setLimitsError] = useState<string | null>(null);
   const [usingMock, setUsingMock] = useState(false);
   const [limitsLoading, setLimitsLoading] = useState(false);
 
@@ -135,11 +136,13 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
 
   const loadLimits = useCallback(async () => {
     setLimitsLoading(true);
+    setLimitsError(null);
     try {
       const next = await getProjectLimits(projectId);
       setLimits(next);
-    } catch {
+    } catch (e) {
       setUsingMock(true);
+      setLimitsError(e instanceof Error ? `${e.message} (Using current/demo limits)` : "Using current/demo limits");
     } finally {
       setLimitsLoading(false);
     }
@@ -250,13 +253,18 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
             <UsageLimitsPanel
               initialValue={limits}
               loading={limitsLoading}
+              error={limitsError}
               onSave={async (next) => {
                 try {
+                  setLimitsError(null);
                   const saved = await updateProjectLimits(projectId, next);
                   setLimits(saved);
-                } catch {
+                } catch (e) {
                   setUsingMock(true);
                   setLimits(next);
+                  setLimitsError(
+                    e instanceof Error ? `${e.message} (Saved locally for demo)` : "Saved locally for demo",
+                  );
                 }
               }}
             />
@@ -294,21 +302,21 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
           {tab === "keys" ? (
             <>
               {keysLoading ? <div className="card" style={{ padding: 16 }}>Loading keys...</div> : null}
-              {keysError ? (
-                <div className="card" style={{ padding: 16, borderColor: "#efc6c9", color: "var(--danger)" }}>
-                  {keysError}
-                </div>
-              ) : null}
               {!keysLoading ? (
                 <KeysPanel
                   keys={keys}
+                  error={keysError}
                   onCreate={async () => {
                     try {
+                      setKeysError(null);
                       const created = await createProjectKey(projectId);
                       setKeys((prev) => [created, ...prev]);
                       return created;
-                    } catch {
+                    } catch (e) {
                       setUsingMock(true);
+                      setKeysError(
+                        e instanceof Error ? `${e.message} (Created demo key instead)` : "Created demo key instead",
+                      );
                       const created = {
                         id: `key_${crypto.randomUUID().slice(0, 8)}`,
                         project_id: projectId,
@@ -324,11 +332,13 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
                   }}
                   onRevoke={async (keyId) => {
                     try {
+                      setKeysError(null);
                       await revokeKey(keyId);
-                    } finally {
                       setKeys((prev) =>
                         prev.map((row) => (row.id === keyId ? { ...row, status: "revoked" } : row)),
                       );
+                    } catch (e) {
+                      setKeysError(e instanceof Error ? e.message : "Failed to revoke key");
                     }
                   }}
                 />

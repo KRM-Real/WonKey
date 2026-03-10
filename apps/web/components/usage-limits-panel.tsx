@@ -6,10 +6,11 @@ import { UsageLimitConfig } from "@/lib/types";
 type Props = {
   initialValue: UsageLimitConfig;
   loading?: boolean;
+  error?: string | null;
   onSave: (next: UsageLimitConfig) => Promise<void>;
 };
 
-export function UsageLimitsPanel({ initialValue, loading = false, onSave }: Props) {
+export function UsageLimitsPanel({ initialValue, loading = false, error = null, onSave }: Props) {
   const [form, setForm] = useState<UsageLimitConfig>(initialValue);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -80,6 +81,12 @@ export function UsageLimitsPanel({ initialValue, loading = false, onSave }: Prop
           </button>
         </div>
       </article>
+
+      {error ? (
+        <article className="card" style={{ padding: 16, borderColor: "#efc6c9", color: "var(--danger)" }}>
+          {error}
+        </article>
+      ) : null}
 
       <article className="card soft-shadow" style={{ padding: 16 }}>
         <div className="split-row">

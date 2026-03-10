@@ -105,6 +105,7 @@ Create `apps/backend/.env` from `apps/backend/.env.example` and set at least:
 
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `API_KEY_PEPPER`
 - `DEFAULT_ORG_ID`
 - `API_KEY_HMAC_SECRET`
 - `REDIS_URL`
@@ -170,7 +171,20 @@ cd apps/backend
 python -m unittest discover -s tests -p "test_*.py"
 ```
 
-Covered areas include Sprint 4 logging behavior and Sprint 5 analytics calculations/routes.
+Web route/client checks are under `apps/web/tests`.
+
+```powershell
+cd apps/web
+npm test
+npx tsc --noEmit
+```
+
+Covered areas now include:
+
+- Backend middleware: admin auth, API key auth, rate limiting, request logging
+- Backend routes/services: projects, keys, limits, logs, analytics
+- Backend config validation for non-dev secrets and unsafe dev overrides
+- Web admin proxy routing and API client retry/error handling
 
 ## Security Notes
 
@@ -182,6 +196,7 @@ Covered areas include Sprint 4 logging behavior and Sprint 5 analytics calculati
 ## Documentation
 
 - Sprint plan: [sprints.md](./sprints.md)
+- Release checklist: [docs/release-checklist.md](./docs/release-checklist.md)
 - Backend app: [apps/backend](./apps/backend)
 - Frontend app: [apps/web](./apps/web)
 - Infra and SQL: [infra](./infra)
@@ -189,7 +204,7 @@ Covered areas include Sprint 4 logging behavior and Sprint 5 analytics calculati
 
 ## Current Priorities
 
-1. Expand automated test coverage across core flows and edge cases.
-2. Tighten production configuration and secret management.
-3. Finalize UI/UX polish and error-state consistency.
-4. Validate deployment flow and release checklist.
+1. Execute the release checklist against the target deployment environments.
+2. Finish remaining UI polish around loading, fallback, and empty states.
+3. Verify production env setup across frontend hosting, backend hosting, Redis, and Supabase.
+4. Add higher-level end-to-end coverage once deployment targets are fixed.
