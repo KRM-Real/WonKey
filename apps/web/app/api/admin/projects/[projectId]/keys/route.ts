@@ -1,26 +1,18 @@
 import { proxyToBackend } from "@/lib/backend-proxy";
+import { adminProxyGet, adminProxyWrite } from "@/lib/admin-proxy-route";
 import { requireAdminUser } from "@/lib/admin-auth";
 
 type Params = { params: Promise<{ projectId: string }> };
 
 export async function GET(request: Request, { params }: Params) {
-  const auth = await requireAdminUser(request);
-  if (auth instanceof Response) return auth;
-
-  const { projectId } = await params;
-  return proxyToBackend(`/v1/projects/${projectId}/keys`, {
-    method: "GET",
-    headers: { "X-User-Id": auth.userId },
+  return adminProxyGet(request, { params }, { requireAdminUser, proxyToBackend }, ({ params: resolvedParams }) => {
+    return `/v1/projects/${resolvedParams.projectId}/keys`;
   });
 }
 
 export async function POST(request: Request, { params }: Params) {
-  const auth = await requireAdminUser(request);
-  if (auth instanceof Response) return auth;
-
-  const { projectId } = await params;
-  return proxyToBackend(`/v1/projects/${projectId}/keys`, {
+  return adminProxyWrite(request, { params }, { requireAdminUser, proxyToBackend }, {
     method: "POST",
-    headers: { "X-User-Id": auth.userId },
+    buildPath: ({ params: resolvedParams }) => `/v1/projects/${resolvedParams.projectId}/keys`,
   });
 }

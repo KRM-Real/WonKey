@@ -1,4 +1,4 @@
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -37,6 +37,37 @@ class Settings(BaseSettings):
             return ""
         return str(v).strip().split()[0]
 
+    @field_validator("ENV", mode="before")
+    @classmethod
+    def _sanitize_env(cls, v: str) -> str:
+        return str(v or "dev").strip().lower()
+
+    @model_validator(mode="after")
+    def _validate_runtime_requirements(self):
+        is_dev = self.ENV == "dev"
+        required_secret_fields = {
+            "SUPABASE_URL": self.SUPABASE_URL,
+            "SUPABASE_SERVICE_ROLE_KEY": self.SUPABASE_SERVICE_ROLE_KEY,
+            "API_KEY_HMAC_SECRET": self.API_KEY_HMAC_SECRET,
+            "ADMIN_API_KEY": self.ADMIN_API_KEY,
+        }
+
+        if not is_dev:
+            missing = [name for name, value in required_secret_fields.items() if not str(value).strip()]
+            if missing:
+                missing_csv = ", ".join(missing)
+                raise ValueError(f"Missing required settings for {self.ENV}: {missing_csv}")
+
+            if self.API_KEY_PEPPER.strip() == "change-me":
+                raise ValueError("API_KEY_PEPPER must be set to a non-default secret outside dev")
+
+        if self.DEV_DISABLE_ORG_MEMBERSHIP_CHECKS and not is_dev:
+            raise ValueError("DEV_DISABLE_ORG_MEMBERSHIP_CHECKS can only be enabled in dev")
+
+        if self.DEV_DISABLE_ORG_MEMBERSHIP_CHECKS and not self.DEFAULT_ORG_ID:
+            raise ValueError("DEFAULT_ORG_ID is required when DEV_DISABLE_ORG_MEMBERSHIP_CHECKS=true")
+
+        return self
 
     model_config = SettingsConfigDict(
         env_file=".env",

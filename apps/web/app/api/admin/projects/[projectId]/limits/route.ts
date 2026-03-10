@@ -1,28 +1,19 @@
 import { proxyToBackend } from "@/lib/backend-proxy";
+import { adminProxyGet, adminProxyWrite } from "@/lib/admin-proxy-route";
 import { requireAdminUser } from "@/lib/admin-auth";
 
 type Params = { params: Promise<{ projectId: string }> };
 
 export async function GET(request: Request, { params }: Params) {
-  const auth = await requireAdminUser(request);
-  if (auth instanceof Response) return auth;
-
-  const { projectId } = await params;
-  return proxyToBackend(`/v1/projects/${projectId}/limits`, {
-    method: "GET",
-    headers: { "X-User-Id": auth.userId },
+  return adminProxyGet(request, { params }, { requireAdminUser, proxyToBackend }, ({ params: resolvedParams }) => {
+    return `/v1/projects/${resolvedParams.projectId}/limits`;
   });
 }
 
 export async function PUT(request: Request, { params }: Params) {
-  const auth = await requireAdminUser(request);
-  if (auth instanceof Response) return auth;
-
-  const { projectId } = await params;
-  const body = await request.text();
-  return proxyToBackend(`/v1/projects/${projectId}/limits`, {
+  return adminProxyWrite(request, { params }, { requireAdminUser, proxyToBackend }, {
     method: "PUT",
-    body,
-    headers: { "X-User-Id": auth.userId },
+    includeBody: true,
+    buildPath: ({ params: resolvedParams }) => `/v1/projects/${resolvedParams.projectId}/limits`,
   });
 }
