@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Gauge, Save } from "lucide-react";
 import { UsageLimitConfig } from "@/lib/types";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 type Props = {
   initialValue: UsageLimitConfig;
@@ -31,72 +36,84 @@ export function UsageLimitsPanel({ initialValue, loading = false, error = null, 
   }
 
   return (
-    <section className="stack">
-      <article className="card soft-shadow" style={{ padding: 16 }}>
-        <h3 style={{ margin: 0 }}>Project Usage Limits</h3>
-        <p className="muted" style={{ marginBottom: 14 }}>
-          Configure request quotas per project. Changes apply to new requests immediately.
-        </p>
-
-        <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-          <label style={{ display: "grid", gap: 8 }}>
-            Requests per minute
-            <input
-              className="input"
-              type="number"
-              min={1}
-              value={form.requestsPerMinute}
-              disabled={loading}
-              onChange={(e) => setForm({ ...form, requestsPerMinute: Number(e.target.value || 1) })}
-            />
-          </label>
-          <label style={{ display: "grid", gap: 8 }}>
-            Window (seconds)
-            <input
-              className="input"
-              type="number"
-              min={1}
-              value={form.windowSeconds}
-              disabled={loading}
-              onChange={(e) => setForm({ ...form, windowSeconds: Number(e.target.value || 60) })}
-            />
-          </label>
-          <label style={{ display: "grid", gap: 8 }}>
-            Burst
-            <input
-              className="input"
+    <section className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
+      <Card>
+        <CardHeader className="border-b border-slate-100 pb-5">
+          <CardTitle>Usage Limits</CardTitle>
+          <CardDescription>Adjust project throughput and window settings. Changes apply immediately.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5 p-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="grid gap-2 text-sm font-medium text-slate-700">
+              Requests per minute
+              <Input
+                type="number"
+                min={1}
+                value={form.requestsPerMinute}
+                disabled={loading}
+                onChange={(e) => setForm({ ...form, requestsPerMinute: Number(e.target.value || 1) })}
+              />
+            </label>
+            <label className="grid gap-2 text-sm font-medium text-slate-700">
+              Window seconds
+              <Input
+                type="number"
+                min={1}
+                value={form.windowSeconds}
+                disabled={loading}
+                onChange={(e) => setForm({ ...form, windowSeconds: Number(e.target.value || 60) })}
+              />
+            </label>
+          </div>
+          <label className="grid gap-2 text-sm font-medium text-slate-700">
+            Burst allowance
+            <Input
               type="number"
               min={1}
               value={form.burst}
               disabled={loading}
-              onChange={(e) => setForm({ ...form, burst: Number(e.target.value || 10) })}
+              onChange={(e) => setForm({ ...form, burst: Number(e.target.value || 1) })}
             />
           </label>
-        </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="text-sm text-slate-500">Use burst to absorb short spikes without immediate throttling.</p>
+            <Button type="button" disabled={busy || loading} onClick={submit}>
+              <Save className="h-4 w-4" />
+              {loading ? "Loading..." : busy ? "Saving..." : "Save limits"}
+            </Button>
+          </div>
+          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        </CardContent>
+      </Card>
 
-        <div className="split-row" style={{ marginTop: 14 }}>
-          <span className="muted">Helper: burst lets short spikes pass without instant throttling.</span>
-          <button type="button" className="button button-primary" disabled={busy || loading} onClick={submit}>
-            {loading ? "Loading..." : busy ? "Saving..." : "Save limits"}
-          </button>
-        </div>
-      </article>
-
-      {error ? (
-        <article className="card" style={{ padding: 16, borderColor: "#efc6c9", color: "var(--danger)" }}>
-          {error}
-        </article>
-      ) : null}
-
-      <article className="card soft-shadow" style={{ padding: 16 }}>
-        <div className="split-row">
-          <strong>Current limit card</strong>
-          {saved ? <span className="badge">Updated</span> : null}
-        </div>
-        <p className="muted" style={{ marginBottom: 0 }}>
-          {form.requestsPerMinute} req/min | window {form.windowSeconds}s | burst {form.burst}
-        </p>
-      </article>
+      <Card className="surface-grid">
+        <CardHeader className="border-b border-slate-100 pb-5">
+          <div className="flex items-center justify-between">
+            <CardTitle>Current Policy</CardTitle>
+            {saved ? <Badge variant="green">Updated</Badge> : null}
+          </div>
+          <CardDescription>Live configuration summary for this project.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 p-6">
+          <div className="grid h-14 w-14 place-items-center rounded-2xl bg-blue-50 text-blue-600">
+            <Gauge className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-3xl font-semibold tracking-[-0.04em] text-slate-900">{form.requestsPerMinute} rpm</p>
+            <p className="mt-1 text-sm text-slate-500">Primary sustained request budget.</p>
+          </div>
+          <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-slate-500">Window</span>
+              <span className="font-medium text-slate-900">{form.windowSeconds}s</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-slate-500">Burst</span>
+              <span className="font-medium text-slate-900">{form.burst} requests</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </section>
   );
 }

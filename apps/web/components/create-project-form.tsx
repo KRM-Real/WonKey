@@ -1,6 +1,10 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 type Props = {
   onCreate: (name: string) => Promise<void>;
@@ -23,27 +27,26 @@ export function CreateProjectForm({ onCreate }: Props) {
   }
 
   return (
-    <form onSubmit={submit} className="card soft-shadow" style={{ padding: 18 }}>
-      <div className="split-row" style={{ alignItems: "flex-end", flexWrap: "wrap" }}>
-        <div style={{ flex: "1 1 360px", display: "grid", gap: 8 }}>
-          <label htmlFor="project-name" style={{ fontWeight: 600 }}>
-            Create project
-          </label>
-          <input
+    <Card>
+      <CardHeader className="border-b border-slate-100 pb-5">
+        <CardTitle>Create project</CardTitle>
+        <CardDescription>Create a project to issue API keys, monitor usage, and configure limits.</CardDescription>
+      </CardHeader>
+      <CardContent className="p-6">
+        <form onSubmit={submit} className="flex flex-col gap-4 lg:flex-row">
+          <Input
             id="project-name"
-            className="input"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Payments API"
+            className="lg:flex-1"
           />
-          <span className="muted" style={{ fontSize: 13 }}>
-            Create a project to issue API keys, monitor usage, and configure limits.
-          </span>
-        </div>
-        <button className="button button-primary" disabled={busy || !name.trim()} type="submit">
-          {busy ? "Creating..." : "Create Project"}
-        </button>
-      </div>
-    </form>
+          <Button className="lg:self-start" disabled={busy || !name.trim()} type="submit">
+            <Plus className="h-4 w-4" />
+            {busy ? "Creating..." : "Create Project"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

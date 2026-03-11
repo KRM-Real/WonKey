@@ -6,6 +6,8 @@ import { Project } from "@/lib/types";
 import { CreateProjectForm } from "@/components/create-project-form";
 import { ProjectsList } from "@/components/projects-list";
 import { mockProjects } from "@/lib/mock-data";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 
 export function ProjectsClient() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -69,16 +71,20 @@ export function ProjectsClient() {
   }
 
   return (
-    <section className="stack">
-      {usingMock ? <div className="badge">Using demo project data</div> : null}
+    <section className="space-y-6">
+      {usingMock ? <Badge variant="yellow">Using demo project data</Badge> : null}
       <CreateProjectForm onCreate={onCreate} />
-      {loading ? <div className="panel" style={{ padding: 16 }}>Loading projects...</div> : null}
-      {error ? (
-        <div className="panel" style={{ padding: 16, borderColor: "#efc6c9", color: "var(--danger)" }}>
-          {error}
-        </div>
+      {loading ? (
+        <Card>
+          <CardContent className="p-6 text-sm text-slate-500">Loading projects...</CardContent>
+        </Card>
       ) : null}
-      {!loading && !error ? <ProjectsList projects={projects} /> : null}
+      {error ? (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-4 text-sm text-red-700">{error}</CardContent>
+        </Card>
+      ) : null}
+      {!loading ? <ProjectsList projects={projects} /> : null}
     </section>
   );
 }

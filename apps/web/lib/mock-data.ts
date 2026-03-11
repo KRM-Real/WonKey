@@ -1,6 +1,6 @@
 import { AnalyticsOverview, AnalyticsTimeseries, ApiKey, Project, RequestLog } from "@/lib/types";
 
-const now = Date.now();
+const now = Date.parse("2026-03-10T12:00:00.000Z");
 
 export const mockProjects: Project[] = [
   {

@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import { supabase } from "@/lib/supabase-browser";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 type Mode = "login" | "signup";
 
@@ -70,74 +74,69 @@ export function AuthForm({ mode }: Props) {
   }
 
   return (
-    <section className="panel auth-shell">
-      <h1 style={{ marginTop: 0, marginBottom: 8, fontSize: 34 }}>
-        {mode === "login" ? "Welcome back" : "Create your WonKey account"}
-      </h1>
-      <p className="muted" style={{ marginTop: 0, marginBottom: 20 }}>
-        {mode === "login"
-          ? "Access your WonKey dashboard."
-          : "Start managing API keys and usage analytics."}
-      </p>
+    <Card className="mx-auto w-full max-w-xl">
+      <CardHeader className="border-b border-slate-100 pb-5">
+        <CardTitle className="text-3xl tracking-[-0.04em]">
+          {mode === "login" ? "Welcome back" : "Create your WonKey account"}
+        </CardTitle>
+        <CardDescription>
+          {mode === "login" ? "Access your WonKey dashboard." : "Start managing API keys and usage analytics."}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-5 p-6">
+        <form onSubmit={onSubmit} className="space-y-4">
+          <label className="grid gap-2 text-sm font-medium text-slate-700">
+            Email
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              required
+            />
+          </label>
 
-      <form onSubmit={onSubmit} className="stack" style={{ gap: 12 }}>
-        <label style={{ display: "grid", gap: 8 }}>
-          Email
-          <input
-            className="input"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-            required
-          />
-        </label>
-
-        <label style={{ display: "grid", gap: 8 }}>
-          Password
-          <input
-            className="input"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete={mode === "login" ? "current-password" : "new-password"}
-            minLength={8}
-            required
-          />
-        </label>
-
-        {mode === "signup" ? (
-          <label style={{ display: "grid", gap: 8 }}>
-            Confirm password
-            <input
-              className="input"
+          <label className="grid gap-2 text-sm font-medium text-slate-700">
+            Password
+            <Input
               type="password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete={mode === "login" ? "current-password" : "new-password"}
               minLength={8}
               required
             />
           </label>
-        ) : null}
 
-        <button className="button button-primary" type="submit" disabled={busy}>
-          {busy ? "Working..." : mode === "login" ? "Log in" : "Sign up"}
-        </button>
-      </form>
+          {mode === "signup" ? (
+            <label className="grid gap-2 text-sm font-medium text-slate-700">
+              Confirm password
+              <Input
+                type="password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                autoComplete="new-password"
+                minLength={8}
+                required
+              />
+            </label>
+          ) : null}
 
-      <p className="muted" style={{ marginBottom: 0, marginTop: 16 }}>
-        {mode === "login" ? "No account yet? " : "Already have an account? "}
-        <Link href={mode === "login" ? "/signup" : "/login"} className="auth-link">
-          {mode === "login" ? "Sign up" : "Log in"}
-        </Link>
-      </p>
+          <Button className="w-full" type="submit" disabled={busy}>
+            {busy ? "Working..." : mode === "login" ? "Log in" : "Sign up"}
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </form>
 
-      {message ? (
-        <div className="panel" style={{ padding: 12, marginTop: 12 }}>
-          {message}
-        </div>
-      ) : null}
-    </section>
+        <p className="text-sm text-slate-500">
+          {mode === "login" ? "No account yet? " : "Already have an account? "}
+          <Link href={mode === "login" ? "/signup" : "/login"} className="font-medium text-blue-600 hover:text-blue-700">
+            {mode === "login" ? "Sign up" : "Log in"}
+          </Link>
+        </p>
+
+        {message ? <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">{message}</div> : null}
+      </CardContent>
+    </Card>
   );
 }

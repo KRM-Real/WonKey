@@ -16,15 +16,16 @@ import { AnalyticsOverview, AnalyticsTimeseries, ApiKey, RequestLog, UsageLimitC
 import {
   mockKeysByProject,
   mockLogsByProject,
+  mockOverviewByProject,
   mockProjects,
+  mockTimeseriesByProject,
 } from "@/lib/mock-data";
 import { AnalyticsFilters, AnalyticsPanel } from "@/components/analytics-panel";
+import { DashboardLayout } from "@/components/dashboard-layout";
 import { KeysPanel } from "@/components/keys-panel";
 import { LogsFilters, LogsPanel } from "@/components/logs-panel";
-import { ProjectTabs } from "@/components/project-tabs";
-import { ProjectSidebar } from "@/components/project-sidebar";
-import { TopNav } from "@/components/top-nav";
 import { UsageLimitsPanel } from "@/components/usage-limits-panel";
+import { Card, CardContent } from "@/components/ui/card";
 
 type Tab = "keys" | "limits" | "logs" | "analytics";
 
@@ -81,6 +82,8 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
     query: "",
     range: "30d",
     limit: "100",
+    from: "",
+    to: "",
   });
 
   const [analyticsFilters, setAnalyticsFilters] = useState<AnalyticsFilters>({
@@ -156,20 +159,25 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
       try {
         const statusParsed = filters.status ? Number(filters.status) : undefined;
         const limitParsed = filters.limit ? Number(filters.limit) : undefined;
-        const from = fromRange(filters.range);
+        const from = toIsoOrUndefined(filters.from) ?? fromRange(filters.range);
+        const to = toIsoOrUndefined(filters.to) ?? new Date().toISOString();
         const rows = await listProjectLogs(projectId, {
           status: Number.isFinite(statusParsed) ? statusParsed : undefined,
           path: filters.query || undefined,
           from,
-          to: new Date().toISOString(),
+          to,
           limit: Number.isFinite(limitParsed) ? limitParsed : undefined,
         });
         setLogs(rows);
       } catch (e) {
         setUsingMock(true);
+        const fromFloor = new Date(toIsoOrUndefined(filters.from) ?? fromRange(filters.range)).getTime();
+        const toCeiling = new Date(toIsoOrUndefined(filters.to) ?? new Date().toISOString()).getTime();
         let rows = [...(mockLogsByProject[projectId] ?? mockLogsByProject.proj_payments ?? [])];
-        const floor = new Date(fromRange(filters.range)).getTime();
-        rows = rows.filter((row) => new Date(row.created_at).getTime() >= floor);
+        rows = rows.filter((row) => {
+          const timestamp = new Date(row.created_at).getTime();
+          return timestamp >= fromFloor && timestamp <= toCeiling;
+        });
         if (filters.status) {
           rows = rows.filter((row) => String(row.status_code) === filters.status);
         }
@@ -205,8 +213,10 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
         setTimeseries(timeseriesData);
         setLogs(recentLogs);
       } catch (e) {
-        setOverview(null);
-        setTimeseries(null);
+        setUsingMock(true);
+        setOverview(mockOverviewByProject[projectId] ?? mockOverviewByProject.proj_payments ?? null);
+        setTimeseries(mockTimeseriesByProject[projectId] ?? mockTimeseriesByProject.proj_payments ?? null);
+        setLogs(mockLogsByProject[projectId] ?? mockLogsByProject.proj_payments ?? []);
         setAnalyticsError(e instanceof Error ? e.message : "Failed to load analytics");
       } finally {
         setAnalyticsLoading(false);
@@ -236,126 +246,117 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
   );
 
   return (
-    <section className="app-shell">
-      <TopNav />
-      <div className="content-shell">
-        <ProjectSidebar projectId={projectId} projectName={projectName} activeTab={tab} />
-        <div className="dashboard-main">
-          <div className="split-row" style={{ alignItems: "flex-end", marginBottom: 8 }}>
-            <div>
-              <h1 style={{ margin: 0, fontSize: 48 }}>{projectName}</h1>
-              {usingMock ? <div className="badge">Using demo data fallback</div> : null}
-            </div>
-          </div>
-          <ProjectTabs projectId={projectId} />
+    <DashboardLayout projectId={projectId} projectName={projectName} activeTab={tab} usingMock={usingMock}>
+      <div className="transition-opacity duration-200">
+        {tab === "limits" ? (
+          <UsageLimitsPanel
+            initialValue={limits}
+            loading={limitsLoading}
+            error={limitsError}
+            onSave={async (next) => {
+              try {
+                setLimitsError(null);
+                const saved = await updateProjectLimits(projectId, next);
+                setLimits(saved);
+              } catch (e) {
+                setUsingMock(true);
+                setLimits(next);
+                setLimitsError(
+                  e instanceof Error ? `${e.message} (Saved locally for demo)` : "Saved locally for demo",
+                );
+              }
+            }}
+          />
+        ) : null}
 
-          {tab === "limits" ? (
-            <UsageLimitsPanel
-              initialValue={limits}
-              loading={limitsLoading}
-              error={limitsError}
-              onSave={async (next) => {
-                try {
-                  setLimitsError(null);
-                  const saved = await updateProjectLimits(projectId, next);
-                  setLimits(saved);
-                } catch (e) {
-                  setUsingMock(true);
-                  setLimits(next);
-                  setLimitsError(
-                    e instanceof Error ? `${e.message} (Saved locally for demo)` : "Saved locally for demo",
-                  );
-                }
-              }}
-            />
-          ) : null}
+        {tab === "logs" ? (
+          <LogsPanel
+            logs={logs}
+            loading={logsLoading}
+            error={logsError}
+            filters={logsFilters}
+            onChangeFilters={setLogsFilters}
+            onApply={async () => loadLogs(logsFilters)}
+            onReset={async () => {
+              const reset: LogsFilters = {
+                status: "",
+                query: "",
+                range: "30d",
+                limit: "100",
+                from: "",
+                to: "",
+              };
+              setLogsFilters(reset);
+              await loadLogs(reset);
+            }}
+          />
+        ) : null}
 
-          {tab === "logs" ? (
-            <LogsPanel
-              logs={logs}
-              loading={logsLoading}
-              error={logsError}
-              filters={logsFilters}
-              onChangeFilters={setLogsFilters}
-              onApply={async () => loadLogs(logsFilters)}
-              onReset={async () => {
-                const reset: LogsFilters = { status: "", query: "", range: "30d", limit: "100" };
-                setLogsFilters(reset);
-                await loadLogs(reset);
-              }}
-            />
-          ) : null}
+        {tab === "analytics" ? (
+          <AnalyticsPanel
+            overview={overview}
+            timeseries={timeseries}
+            logsPreview={logs}
+            loading={analyticsLoading}
+            error={analyticsError}
+            filters={analyticsFilters}
+            onChangeFilters={setAnalyticsFilters}
+            onRefresh={async () => loadAnalytics(analyticsFilters)}
+          />
+        ) : null}
 
-          {tab === "analytics" ? (
-            <AnalyticsPanel
-              overview={overview}
-              timeseries={timeseries}
-              logsPreview={logs}
-              loading={analyticsLoading}
-              error={analyticsError}
-              filters={analyticsFilters}
-              onChangeFilters={setAnalyticsFilters}
-              onRefresh={async () => loadAnalytics(analyticsFilters)}
-            />
-          ) : null}
+        {tab === "keys" ? (
+          <KeysPanel
+            keys={keys}
+            loading={keysLoading}
+            error={keysError}
+            onCreate={async () => {
+              try {
+                setKeysError(null);
+                const created = await createProjectKey(projectId);
+                setKeys((prev) => [created, ...prev]);
+                return created;
+              } catch (e) {
+                setUsingMock(true);
+                setKeysError(
+                  e instanceof Error ? `${e.message} (Created demo key instead)` : "Created demo key instead",
+                );
+                const created = {
+                  id: `key_${crypto.randomUUID().slice(0, 8)}`,
+                  project_id: projectId,
+                  key_prefix: `wk_live_${Math.random().toString(36).slice(2, 8)}`,
+                  status: "active",
+                  created_at: new Date().toISOString(),
+                  last_used_at: null,
+                  raw_key: `wk_live_${crypto.randomUUID().replace(/-/g, "")}`,
+                };
+                setKeys((prev) => [created, ...prev]);
+                return created;
+              }
+            }}
+            onRevoke={async (keyId) => {
+              try {
+                setKeysError(null);
+                await revokeKey(keyId);
+                setKeys((prev) => prev.map((row) => (row.id === keyId ? { ...row, status: "revoked" } : row)));
+              } catch (e) {
+                setKeysError(e instanceof Error ? e.message : "Failed to revoke key");
+              }
+            }}
+          />
+        ) : null}
 
-          {tab === "keys" ? (
-            <>
-              {keysLoading ? <div className="card" style={{ padding: 16 }}>Loading keys...</div> : null}
-              {!keysLoading ? (
-                <KeysPanel
-                  keys={keys}
-                  error={keysError}
-                  onCreate={async () => {
-                    try {
-                      setKeysError(null);
-                      const created = await createProjectKey(projectId);
-                      setKeys((prev) => [created, ...prev]);
-                      return created;
-                    } catch (e) {
-                      setUsingMock(true);
-                      setKeysError(
-                        e instanceof Error ? `${e.message} (Created demo key instead)` : "Created demo key instead",
-                      );
-                      const created = {
-                        id: `key_${crypto.randomUUID().slice(0, 8)}`,
-                        project_id: projectId,
-                        key_prefix: `wk_live_${Math.random().toString(36).slice(2, 8)}`,
-                        status: "active",
-                        created_at: new Date().toISOString(),
-                        last_used_at: null,
-                        raw_key: `wk_live_${crypto.randomUUID().replace(/-/g, "")}`,
-                      };
-                      setKeys((prev) => [created, ...prev]);
-                      return created;
-                    }
-                  }}
-                  onRevoke={async (keyId) => {
-                    try {
-                      setKeysError(null);
-                      await revokeKey(keyId);
-                      setKeys((prev) =>
-                        prev.map((row) => (row.id === keyId ? { ...row, status: "revoked" } : row)),
-                      );
-                    } catch (e) {
-                      setKeysError(e instanceof Error ? e.message : "Failed to revoke key");
-                    }
-                  }}
-                />
-              ) : null}
-            </>
-          ) : null}
-
-          {!hasLoadedAnyData && tab !== "limits" ? (
-            <div className="empty-state">
-              <h3 style={{ marginTop: 0 }}>No data yet</h3>
-              <p className="muted" style={{ marginBottom: 0 }}>
+        {!hasLoadedAnyData && tab !== "limits" ? (
+          <Card className="border-dashed">
+            <CardContent className="p-8 text-center">
+              <h3 className="text-lg font-semibold text-slate-900">No data yet</h3>
+              <p className="mt-2 text-sm text-slate-500">
                 This project will populate as soon as requests are sent with an active key.
               </p>
-            </div>
-          ) : null}
-        </div>
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
-    </section>
+    </DashboardLayout>
   );
 }
