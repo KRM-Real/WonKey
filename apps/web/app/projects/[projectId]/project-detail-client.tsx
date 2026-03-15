@@ -24,10 +24,11 @@ import { AnalyticsFilters, AnalyticsPanel } from "@/components/analytics-panel";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { KeysPanel } from "@/components/keys-panel";
 import { LogsFilters, LogsPanel } from "@/components/logs-panel";
+import { SettingsPanel } from "@/components/settings-panel";
 import { UsageLimitsPanel } from "@/components/usage-limits-panel";
 import { Card, CardContent } from "@/components/ui/card";
 
-type Tab = "keys" | "limits" | "logs" | "analytics";
+type Tab = "keys" | "limits" | "logs" | "analytics" | "settings";
 
 type Props = {
   projectId: string;
@@ -346,7 +347,11 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
           />
         ) : null}
 
-        {!hasLoadedAnyData && tab !== "limits" ? (
+        {tab === "settings" ? (
+          <SettingsPanel projectId={projectId} projectName={projectName} usingMock={usingMock} />
+        ) : null}
+
+        {!hasLoadedAnyData && tab !== "limits" && tab !== "settings" ? (
           <Card className="border-dashed">
             <CardContent className="p-8 text-center">
               <h3 className="text-lg font-semibold text-slate-900">No data yet</h3>

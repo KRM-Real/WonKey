@@ -9,6 +9,7 @@ const tabs = [
   { slug: "limits", label: "Usage Limits" },
   { slug: "logs", label: "Logs" },
   { slug: "analytics", label: "Analytics" },
+  { slug: "settings", label: "Settings" },
 ] as const;
 
 export function ProjectTabs({ projectId }: { projectId: string }) {

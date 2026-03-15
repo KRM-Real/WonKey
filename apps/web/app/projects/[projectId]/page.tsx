@@ -6,8 +6,8 @@ type Props = {
   searchParams: Promise<{ tab?: string }>;
 };
 
-function normalizeTab(tab: string | undefined): "keys" | "limits" | "logs" | "analytics" {
-  if (tab === "limits" || tab === "logs" || tab === "analytics") {
+function normalizeTab(tab: string | undefined): "keys" | "limits" | "logs" | "analytics" | "settings" {
+  if (tab === "limits" || tab === "logs" || tab === "analytics" || tab === "settings") {
     return tab;
   }
   return "keys";

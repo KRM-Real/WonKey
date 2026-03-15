@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 type Props = {
   projectId: string;
   projectName: string;
-  activeTab: "keys" | "limits" | "logs" | "analytics";
+  activeTab: "keys" | "limits" | "logs" | "analytics" | "settings";
   usingMock: boolean;
   children: ReactNode;
 };

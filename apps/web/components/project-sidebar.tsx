@@ -5,14 +5,14 @@ import { BarChart3, FolderKanban, KeyRound, LayoutGrid, Logs, Settings2 } from "
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-type Tab = "keys" | "limits" | "logs" | "analytics";
+type Tab = "keys" | "limits" | "logs" | "analytics" | "settings";
 
 const navItems = [
   { slug: "keys" as const, label: "API Keys", icon: KeyRound },
   { slug: "limits" as const, label: "Usage Limits", icon: LayoutGrid },
   { slug: "logs" as const, label: "Logs", icon: Logs },
   { slug: "analytics" as const, label: "Analytics", icon: BarChart3 },
-  { slug: "keys" as const, label: "Settings", icon: Settings2 },
+  { slug: "settings" as const, label: "Settings", icon: Settings2 },
 ];
 
 type Props = {
@@ -54,7 +54,7 @@ export function ProjectSidebar({ projectId, projectName, activeTab }: Props) {
         <nav aria-label="Project Navigation" className="space-y-1">
           {navItems.map((item, index) => {
             const Icon = item.icon;
-            const active = item.slug === activeTab && index < 4;
+            const active = item.slug === activeTab;
             return (
               <Link
                 key={`${item.slug}-${item.label}`}
