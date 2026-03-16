@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   createProjectKey,
@@ -20,13 +21,37 @@ import {
   mockProjects,
   mockTimeseriesByProject,
 } from "@/lib/mock-data";
-import { AnalyticsFilters, AnalyticsPanel } from "@/components/analytics-panel";
 import { DashboardLayout } from "@/components/dashboard-layout";
-import { KeysPanel } from "@/components/keys-panel";
-import { LogsFilters, LogsPanel } from "@/components/logs-panel";
-import { SettingsPanel } from "@/components/settings-panel";
-import { UsageLimitsPanel } from "@/components/usage-limits-panel";
 import { Card, CardContent } from "@/components/ui/card";
+import type { AnalyticsFilters } from "@/components/analytics-panel";
+import type { LogsFilters } from "@/components/logs-panel";
+
+function PanelFallback({ label }: { label: string }) {
+  return (
+    <Card>
+      <CardContent className="p-6 text-sm text-slate-500">Loading {label}...</CardContent>
+    </Card>
+  );
+}
+
+const AnalyticsPanel = dynamic(
+  () => import("@/components/analytics-panel").then((mod) => mod.AnalyticsPanel),
+  { loading: () => <PanelFallback label="analytics" /> },
+);
+const KeysPanel = dynamic(() => import("@/components/keys-panel").then((mod) => mod.KeysPanel), {
+  loading: () => <PanelFallback label="keys" />,
+});
+const LogsPanel = dynamic(() => import("@/components/logs-panel").then((mod) => mod.LogsPanel), {
+  loading: () => <PanelFallback label="logs" />,
+});
+const SettingsPanel = dynamic(
+  () => import("@/components/settings-panel").then((mod) => mod.SettingsPanel),
+  { loading: () => <PanelFallback label="settings" /> },
+);
+const UsageLimitsPanel = dynamic(
+  () => import("@/components/usage-limits-panel").then((mod) => mod.UsageLimitsPanel),
+  { loading: () => <PanelFallback label="usage limits" /> },
+);
 
 type Tab = "keys" | "limits" | "logs" | "analytics" | "settings";
 

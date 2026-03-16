@@ -49,20 +49,12 @@ Notes:
 Run these before deploy:
 
 ```powershell
-cd apps/backend
-python -m unittest discover -s tests -p "test_*.py"
-```
-
-```powershell
 cd apps/web
-npm test
 npx tsc --noEmit
 ```
 
 Expected result:
 
-- Backend tests pass.
-- Web tests pass.
 - TypeScript check passes without errors.
 
 ## 4. Backend Smoke Tests

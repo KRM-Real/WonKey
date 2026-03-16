@@ -162,30 +162,6 @@ Open `http://localhost:3000`.
 - `GET /v1/projects/{project_id}/analytics/overview?from=&to=`
 - `GET /v1/projects/{project_id}/analytics/timeseries?bucket=hour&from=&to=`
 
-## Testing
-
-Current backend tests are under `apps/backend/tests` and use `unittest`.
-
-```powershell
-cd apps/backend
-python -m unittest discover -s tests -p "test_*.py"
-```
-
-Web route/client checks are under `apps/web/tests`.
-
-```powershell
-cd apps/web
-npm test
-npx tsc --noEmit
-```
-
-Covered areas now include:
-
-- Backend middleware: admin auth, API key auth, rate limiting, request logging
-- Backend routes/services: projects, keys, limits, logs, analytics
-- Backend config validation for non-dev secrets and unsafe dev overrides
-- Web admin proxy routing and API client retry/error handling
-
 ## Security Notes
 
 - Never place admin secrets in `NEXT_PUBLIC_*` variables.

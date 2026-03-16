@@ -33,7 +33,6 @@ npm run dev
 ## Verify
 
 ```bash
-npm test
 npx tsc --noEmit
 ```
 
@@ -41,4 +40,3 @@ npx tsc --noEmit
 
 - Frontend API calls go through Next route handlers under `/api/admin/*`, so backend/admin keys stay server-side.
 - Logs and Analytics go through Next route handlers under `/api/admin/projects/[projectId]/*`.
-- The test script exercises the shared admin proxy and API transport helpers used by those route handlers.

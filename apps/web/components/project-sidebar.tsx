@@ -52,7 +52,7 @@ export function ProjectSidebar({ projectId, projectName, activeTab }: Props) {
         </div>
 
         <nav aria-label="Project Navigation" className="space-y-1">
-          {navItems.map((item, index) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             const active = item.slug === activeTab;
             return (
