@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   createProjectKey,
   getProjectLimits,
@@ -120,6 +120,12 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
 
   const logsFiltersRef = useRef(logsFilters);
   const analyticsFiltersRef = useRef(analyticsFilters);
+  const loadedTabsRef = useRef<Record<string, boolean>>({
+    keys: false,
+    limits: false,
+    logs: false,
+    analytics: false,
+  });
 
   useEffect(() => {
     logsFiltersRef.current = logsFilters;
@@ -128,6 +134,15 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
   useEffect(() => {
     analyticsFiltersRef.current = analyticsFilters;
   }, [analyticsFilters]);
+
+  useEffect(() => {
+    loadedTabsRef.current = {
+      keys: false,
+      limits: false,
+      logs: false,
+      analytics: false,
+    };
+  }, [projectId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -154,10 +169,13 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
     try {
       const rows = await listProjectKeys(projectId);
       setKeys(rows);
+      setUsingMock(false);
+      loadedTabsRef.current.keys = true;
     } catch (e) {
       setUsingMock(true);
       setKeys(mockKeysByProject[projectId] ?? mockKeysByProject.proj_payments ?? []);
       setKeysError(e instanceof Error ? e.message : "Failed to load keys");
+      loadedTabsRef.current.keys = true;
     } finally {
       setKeysLoading(false);
     }
@@ -169,9 +187,12 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
     try {
       const next = await getProjectLimits(projectId);
       setLimits(next);
+      setUsingMock(false);
+      loadedTabsRef.current.limits = true;
     } catch (e) {
       setUsingMock(true);
       setLimitsError(e instanceof Error ? `${e.message} (Using current/demo limits)` : "Using current/demo limits");
+      loadedTabsRef.current.limits = true;
     } finally {
       setLimitsLoading(false);
     }
@@ -195,6 +216,8 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
           limit: Number.isFinite(limitParsed) ? limitParsed : undefined,
         });
         setLogs(rows);
+        setUsingMock(false);
+        loadedTabsRef.current.logs = true;
       } catch (e) {
         setUsingMock(true);
         const fromFloor = new Date(toIsoOrUndefined(filters.from) ?? fromRange(filters.range)).getTime();
@@ -215,6 +238,7 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
         }
         setLogs(rows);
         setLogsError(e instanceof Error ? e.message : "Failed to load logs");
+        loadedTabsRef.current.logs = true;
       } finally {
         setLogsLoading(false);
       }
@@ -238,12 +262,15 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
         setOverview(overviewData);
         setTimeseries(timeseriesData);
         setLogs(recentLogs);
+        setUsingMock(false);
+        loadedTabsRef.current.analytics = true;
       } catch (e) {
         setUsingMock(true);
         setOverview(mockOverviewByProject[projectId] ?? mockOverviewByProject.proj_payments ?? null);
         setTimeseries(mockTimeseriesByProject[projectId] ?? mockTimeseriesByProject.proj_payments ?? null);
         setLogs(mockLogsByProject[projectId] ?? mockLogsByProject.proj_payments ?? []);
         setAnalyticsError(e instanceof Error ? e.message : "Failed to load analytics");
+        loadedTabsRef.current.analytics = true;
       } finally {
         setAnalyticsLoading(false);
       }
@@ -252,10 +279,10 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
   );
 
   useEffect(() => {
-    if (tab === "keys") void loadKeys();
-    if (tab === "limits") void loadLimits();
-    if (tab === "logs") void loadLogs();
-    if (tab === "analytics") void loadAnalytics();
+    if (tab === "keys" && !loadedTabsRef.current.keys) void loadKeys();
+    if (tab === "limits" && !loadedTabsRef.current.limits) void loadLimits();
+    if (tab === "logs" && !loadedTabsRef.current.logs) void loadLogs();
+    if (tab === "analytics" && !loadedTabsRef.current.analytics) void loadAnalytics();
   }, [tab, loadKeys, loadLimits, loadLogs, loadAnalytics]);
 
   useEffect(() => {
@@ -301,7 +328,9 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
             loading={logsLoading}
             error={logsError}
             filters={logsFilters}
-            onChangeFilters={setLogsFilters}
+            onChangeFilters={(next) => {
+              startTransition(() => setLogsFilters(next));
+            }}
             onApply={async () => loadLogs(logsFilters)}
             onReset={async () => {
               const reset: LogsFilters = {
@@ -326,7 +355,9 @@ export function ProjectDetailClient({ projectId, tab }: Props) {
             loading={analyticsLoading}
             error={analyticsError}
             filters={analyticsFilters}
-            onChangeFilters={setAnalyticsFilters}
+            onChangeFilters={(next) => {
+              startTransition(() => setAnalyticsFilters(next));
+            }}
             onRefresh={async () => loadAnalytics(analyticsFilters)}
           />
         ) : null}

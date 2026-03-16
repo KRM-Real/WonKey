@@ -24,6 +24,7 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
           <Link
             key={tab.slug}
             href={`/projects/${projectId}?tab=${tab.slug}`}
+            prefetch={false}
             className={cn(
               "relative shrink-0 px-1 pb-3 text-sm font-medium text-slate-500 transition hover:text-slate-900",
               active && "text-slate-900",

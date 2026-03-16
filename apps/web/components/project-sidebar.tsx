@@ -59,6 +59,7 @@ export function ProjectSidebar({ projectId, projectName, activeTab }: Props) {
               <Link
                 key={`${item.slug}-${item.label}`}
                 href={`/projects/${projectId}?tab=${item.slug}`}
+                prefetch={false}
                 className={cn(
                   "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900",
                   active && "bg-blue-50 text-blue-700",

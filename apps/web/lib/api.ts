@@ -21,18 +21,41 @@ type RequestOptions = {
   body?: unknown;
 };
 
+let cachedAccessToken: string | null | undefined;
+let sessionLookup: Promise<string | null> | null = null;
+
+async function getAccessToken(): Promise<string | null> {
+  if (!supabase) {
+    return null;
+  }
+
+  if (cachedAccessToken !== undefined) {
+    return cachedAccessToken;
+  }
+
+  if (!sessionLookup) {
+    sessionLookup = supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        cachedAccessToken = session?.access_token ?? null;
+        return cachedAccessToken;
+      })
+      .finally(() => {
+        sessionLookup = null;
+      });
+  }
+
+  return sessionLookup;
+}
+
 export async function buildRequestHeaders(): Promise<Record<string, string>> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
 
-  if (supabase) {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session?.access_token) {
-      headers.Authorization = `Bearer ${session.access_token}`;
-    }
+  const accessToken = await getAccessToken();
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
   }
 
   return headers;
